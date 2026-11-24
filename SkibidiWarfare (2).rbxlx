@@ -1,0 +1,3004 @@
+<roblox xmlns:xmime="http://www.w3.org/2005/05/xmlmime" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.roblox.com/roblox.xsd" version="4">
+<Meta name="ExplicitAutoJoints">true</Meta>
+<Item class="Workspace" referent="RBX00000017"><Properties><string name="Name">Workspace</string></Properties><Item class="Part" referent="RBX00000016"><Properties><string name="Name">Baseplate</string><bool name="Anchored">true</bool><bool name="Locked">true</bool><Color3uint8 name="Color3uint8">4284517446</Color3uint8><token name="Material">1280</token><Vector3 name="size"><X>1024</X><Y>1</Y><Z>1024</Z></Vector3><CoordinateFrame name="CFrame"><X>0</X><Y>-0.5</Y><Z>0</Z><R00>1</R00><R01>0</R01><R02>0</R02><R10>0</R10><R11>1</R11><R12>0</R12><R20>0</R20><R21>0</R21><R22>1</R22></CoordinateFrame></Properties></Item>
+</Item>
+<Item class="Lighting" referent="RBX00000018"><Properties><string name="Name">Lighting</string><double name="ClockTime">14</double><float name="Brightness">2</float><bool name="GlobalShadows">true</bool></Properties></Item>
+<Item class="Players" referent="RBX00000019"><Properties><string name="Name">Players</string><bool name="CharacterAutoLoads">false</bool></Properties></Item>
+<Item class="ReplicatedStorage" referent="RBX0000001D"><Properties><string name="Name">ReplicatedStorage</string></Properties><Item class="ModuleScript" referent="RBX0000001A"><Properties><string name="Name">GameConfig</string><ProtectedString name="Source"><![CDATA[-- GameConfig (ModuleScript, ReplicatedStorage)
+-- Everything you might want to tweak lives here.
+
+local Config = {}
+
+-- Set to true to unlock every character right away (handy for testing).
+Config.UnlockAll = false
+
+Config.MenuReturnSeconds = 5      -- "Returning to menu in 5"
+Config.RespawnToMenuDelay = 3     -- seconds after dying before you go back to the menu
+Config.MaxNpcs = 6                -- training "Agents" you can kill for kills/unlocks
+
+-- Sounds. These are built-in Roblox sounds so they always load.
+-- Swap any of them for your own like "rbxassetid://123456789".
+Config.Sounds = {
+	Click = "rbxasset://sounds/button.wav",
+	Hover = "rbxasset://sounds/clickfast.wav",
+	Select = "rbxasset://sounds/electronicpingshort.wav",
+	Tick = "rbxasset://sounds/switch.wav",
+	Spawn = "rbxasset://sounds/flashbulb.wav",
+	Punch = "rbxasset://sounds/swordslash.wav",
+	Bonk = "rbxasset://sounds/kerplunk.wav",
+	Hit = "rbxasset://sounds/snap.mp3",
+	Blaster = "rbxasset://sounds/Rocket shot.wav",
+	LaserLoop = "rbxasset://sounds/Launching rocket.wav",
+	Scream = "rbxasset://sounds/uuhhh.mp3",
+	Slam = "rbxasset://sounds/impact_explosion_03.mp3",
+	Leap = "rbxasset://sounds/kerplunk.wav",
+	Stomp = "rbxasset://sounds/bomb.wav",
+	Death = "rbxasset://sounds/uuhhh.mp3",
+	Unlock = "rbxasset://sounds/victory.wav",
+	MenuMusic = "", -- optional: put a rbxassetid:// music id here
+}
+
+-- Characters.
+--  AssetId   : the Roblox asset id of the model (loaded with InsertService at runtime)
+--  Height    : final height in studs (every model is auto-scaled to this)
+--  ModelYaw  : rotate the model if it faces the wrong way (0, 90, 180, -90)
+--  Roles     : which body parts to make animatable (matched by part name)
+Config.Characters = {
+	{
+		Id = "skibidi", Name = "Skibidi Toilet", AssetId = 17759547081,
+		Starter = true, UnlockKills = 0,
+		Height = 5, Health = 120, Speed = 20, Jump = 55, ModelYaw = 0,
+		Desc = "The classic. Bounces around, sings and bonks.",
+		Tool = { Name = "Head Bonk", Desc = "Headbutt everything in front of you.", Hold = true },
+		Ability = { Name = "Skibidi Scream", Desc = "Shockwave that damages and stuns nearby enemies.", Cooldown = 9 },
+		Roles = { "head" },
+	},
+	{
+		Id = "cameraman", Name = "Camera Man", AssetId = 15398069016,
+		Starter = true, UnlockKills = 0,
+		Height = 6, Health = 160, Speed = 22, Jump = 55, ModelYaw = 0,
+		Desc = "Fast and tough. Three-hit punch combo.",
+		Tool = { Name = "Punch", Desc = "3-hit punch combo. Hold to keep punching.", Hold = true },
+		Ability = { Name = "Ground Slam", Desc = "Jump and smash the ground, damaging and stunning enemies.", Cooldown = 8 },
+		Roles = { "head", "armL", "armR", "legL", "legR" },
+	},
+	{
+		Id = "strider", Name = "Strider Skibidi", AssetId = 17760752561,
+		Starter = false, UnlockKills = 10,
+		Height = 14, Health = 320, Speed = 26, Jump = 70, ModelYaw = 0,
+		Desc = "Walks on spider legs and shoots a blaster.",
+		Tool = { Name = "Blaster", Desc = "Rapid fire energy blaster. Hold to keep firing.", Hold = true },
+		Ability = { Name = "Spider Leap", Desc = "Leap through the air and crash down on enemies.", Cooldown = 7 },
+		Roles = { "head", "legs" },
+		Muzzle = { Y = 0.72, Sep = 0.22, Z = 0.20 }, -- where the blaster shots come out
+	},
+	{
+		Id = "gbathtub", Name = "G-Bathtub", AssetId = 16314159987,
+		Starter = false, UnlockKills = 30,
+		Height = 34, Health = 1500, Speed = 34, Jump = 50, ModelYaw = 0,
+		Desc = "The biggest of them all. Fires lasers from its eyes.",
+		Tool = { Name = "Eye Lasers", Desc = "Hold to fire lasers from both eyes.", Hold = true },
+		Ability = { Name = "Titan Stomp", Desc = "A huge quake that hurts everything around you.", Cooldown = 12 },
+		Roles = { "head" },
+		Eye = { Y = 0.86, Sep = 0.05, Z = 0.10 }, -- where the laser eyes sit (fractions of Height)
+	},
+}
+
+Config.ById = {}
+for _, def in ipairs(Config.Characters) do
+	Config.ById[def.Id] = def
+end
+
+return Config
+]]></ProtectedString></Properties></Item>
+<Item class="ModuleScript" referent="RBX0000001B"><Properties><string name="Name">CharacterAnim</string><ProtectedString name="Source"><![CDATA[-- CharacterAnim (ModuleScript, ReplicatedStorage)
+-- Code-driven "bone" animation for every character (idle / walk / attack / ability).
+-- It moves the Motor6D joints that the server tagged with the attribute "AnimRole".
+-- If you put real AnimationIds into ReplicatedStorage.Animations.<CharacterId>, those
+-- are used instead (see the CharacterAnimator LocalScript).
+
+local Anim = {}
+
+local A = CFrame.Angles
+local sin, cos, abs, clamp = math.sin, math.cos, math.abs, math.clamp
+
+local function collect(model, state)
+	state.roles = {}
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("Motor6D") then
+			local role = d:GetAttribute("AnimRole")
+			if role then
+				local list = state.roles[role]
+				if not list then
+					list = {}
+					state.roles[role] = list
+				end
+				table.insert(list, d)
+			end
+		end
+	end
+end
+
+local function setAll(list, cf)
+	if list then
+		for _, m in ipairs(list) do
+			m.Transform = cf
+		end
+	end
+end
+
+local function headCF(id, t, mv, laser, H)
+	if id == "skibidi" then
+		local f = 5 + mv * 3
+		return CFrame.new(0, abs(sin(t * f * 1.4)) * H * 0.015, 0)
+			* A(sin(t * f * 1.4) * 0.14, 0, sin(t * f * 0.7) * 0.30)
+	elseif id == "gbathtub" then
+		local j = laser and 1 or 0
+		return A(
+			sin(t * 1.1) * 0.07 + (math.random() - 0.5) * 0.06 * j,
+			sin(t * 0.7) * 0.35,
+			sin(t * 1.6) * 0.06 + (math.random() - 0.5) * 0.06 * j
+		)
+	elseif id == "strider" then
+		return A(sin(t * 1.9) * 0.06, sin(t * 0.9) * 0.5, 0)
+	end
+	return A(sin(t * 1.5) * 0.04, sin(t * 0.8) * 0.12, 0)
+end
+
+-- model : the character model (server tags it with CharId + Height attributes)
+-- state : a table you keep for that model between calls
+-- opts  : optional { speed = number, since = number } to force values (used for previews)
+function Anim.Step(model, state, dt, opts)
+	opts = opts or {}
+	if not state.roles then
+		collect(model, state)
+	end
+	local roles = state.roles
+
+	local id = model:GetAttribute("CharId") or ""
+	local H = model:GetAttribute("Height") or 6
+	local hrp = model:FindFirstChild("HumanoidRootPart")
+
+	local speed = opts.speed
+	if speed == nil then
+		speed = 0
+		if hrp then
+			local v = hrp.AssemblyLinearVelocity
+			speed = Vector3.new(v.X, 0, v.Z).Magnitude
+		end
+	end
+
+	local target = clamp(speed / 14, 0, 1.4)
+	state.mv = (state.mv or 0) + (target - (state.mv or 0)) * (1 - math.exp(-dt * 10))
+	local mv = state.mv
+	state.t = (state.t or 0) + dt
+	local t = state.t
+	local freq = (3 + speed * 0.22) * (6 / math.max(H, 3)) ^ 0.3
+	state.phase = (state.phase or 0) + dt * freq * (mv > 0.05 and 1 or 0.2)
+	local phase = state.phase
+
+	local atkName = model:GetAttribute("AtkName")
+	local atkTime = model:GetAttribute("AtkTime")
+	local since = opts.since or (atkTime and (workspace:GetServerTimeNow() - atkTime)) or 99
+	local idx = model:GetAttribute("AtkIdx") or 1
+	local abTime = model:GetAttribute("AbTime")
+	local abSince = opts.abSince or (abTime and (workspace:GetServerTimeNow() - abTime)) or 99
+	local laser = model:GetAttribute("Laser") == true
+
+	-- body: bob, lean and sway
+	local bob = sin(phase * 2) * H * 0.012 * mv + sin(t * 1.6) * H * 0.005
+	local sway = sin(phase) * 0.05 * mv
+	local lean = -0.08 * mv
+	local punch = 0
+	if atkName == "Punch" and since < 0.4 then
+		punch = sin(clamp(since / 0.4, 0, 1) * math.pi)
+		lean = lean + 0.25 * punch
+	end
+	if atkName == "Bonk" and since < 0.35 then
+		lean = lean + 0.45 * sin(clamp(since / 0.35, 0, 1) * math.pi)
+	end
+	if atkName == "Blast" and since < 0.15 then
+		lean = lean - 0.06 * (1 - since / 0.15)
+	end
+	local squash = 0
+	if abSince < 0.5 then
+		squash = sin(clamp(abSince / 0.5, 0, 1) * math.pi)
+	end
+	setAll(roles.body, CFrame.new(0, bob - H * 0.03 * squash, 0) * A(lean + 0.12 * squash, 0, sway))
+
+	-- head
+	setAll(roles.head, headCF(id, t, mv, laser, H))
+
+	-- arms
+	local swing = sin(phase) * 0.9 * mv
+	local rightArm = -swing
+	local leftArm = swing
+	if punch > 0 then
+		if idx % 2 == 1 then
+			rightArm = 1.7 * punch
+		else
+			leftArm = 1.7 * punch
+		end
+	end
+	setAll(roles.armR, A(rightArm, 0, 0.05))
+	setAll(roles.armL, A(leftArm, 0, -0.05))
+
+	-- humanoid legs
+	local legSwing = sin(phase) * 0.8 * mv
+	setAll(roles.legR, A(legSwing, 0, 0))
+	setAll(roles.legL, A(-legSwing, 0, 0))
+
+	-- spider legs (thigh = legA, shin = legB)
+	if roles.legA then
+		for _, m in ipairs(roles.legA) do
+			local i = m:GetAttribute("LegIndex") or 1
+			local p = phase + (i % 2) * math.pi + i * 0.35
+			local lift = math.max(0, sin(p)) * 0.55 * mv
+			local fwd = cos(p) * 0.28 * mv
+			local idle = sin(t * 1.4 + i) * 0.03
+			m.Transform = A(lift + idle, fwd, 0)
+		end
+	end
+	if roles.legB then
+		for _, m in ipairs(roles.legB) do
+			local i = m:GetAttribute("LegIndex") or 1
+			local p = phase + (i % 2) * math.pi + i * 0.35
+			m.Transform = A(-math.max(0, sin(p)) * 0.45 * mv, 0, 0)
+		end
+	end
+end
+
+return Anim
+]]></ProtectedString></Properties></Item>
+<Item class="Folder" referent="RBX0000001C"><Properties><string name="Name">Animations</string></Properties><Item class="StringValue" referent="RBX00000015"><Properties><string name="Name">HOW_TO_ANIMATE</string><string name="Value">HOW TO USE YOUR OWN ANIMATIONS
+
+1. Animate the character's rig in the Animation Editor (or any rig tool) and publish each animation.
+2. Paste the animation id into the AnimationId of the matching Animation here, e.g. rbxassetid://123456789
+   Animations: Idle, Walk, Attack, Ability
+3. Folder names match the character ids: skibidi, cameraman, strider, gbathtub.
+4. As soon as ANY animation in a character's folder has an id, the built-in code animation is turned off for that
+   character and your animations play instead (Idle when standing, Walk when moving, Attack when using the main
+   weapon, Ability when pressing Q).
+5. The joints (Motor6D) of the loaded model are left untouched, so your animation must use the model's own joint names.</string></Properties></Item>
+<Item class="Folder" referent="RBX00000005"><Properties><string name="Name">skibidi</string></Properties><Item class="Animation" referent="RBX00000001"><Properties><string name="Name">Idle</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000002"><Properties><string name="Name">Walk</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000003"><Properties><string name="Name">Attack</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000004"><Properties><string name="Name">Ability</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+</Item>
+<Item class="Folder" referent="RBX0000000A"><Properties><string name="Name">cameraman</string></Properties><Item class="Animation" referent="RBX00000006"><Properties><string name="Name">Idle</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000007"><Properties><string name="Name">Walk</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000008"><Properties><string name="Name">Attack</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000009"><Properties><string name="Name">Ability</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+</Item>
+<Item class="Folder" referent="RBX0000000F"><Properties><string name="Name">strider</string></Properties><Item class="Animation" referent="RBX0000000B"><Properties><string name="Name">Idle</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX0000000C"><Properties><string name="Name">Walk</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX0000000D"><Properties><string name="Name">Attack</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX0000000E"><Properties><string name="Name">Ability</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+</Item>
+<Item class="Folder" referent="RBX00000014"><Properties><string name="Name">gbathtub</string></Properties><Item class="Animation" referent="RBX00000010"><Properties><string name="Name">Idle</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000011"><Properties><string name="Name">Walk</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000012"><Properties><string name="Name">Attack</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+<Item class="Animation" referent="RBX00000013"><Properties><string name="Name">Ability</string><Content name="AnimationId"><null></null></Content></Properties></Item>
+</Item>
+</Item>
+</Item>
+<Item class="ServerScriptService" referent="RBX0000001F"><Properties><string name="Name">ServerScriptService</string></Properties><Item class="ModuleScript" referent="RBX000000F0"><Properties><string name="Name">ProgressStore</string><ProtectedString name="Source"><![CDATA[-- ProgressStore (ModuleScript, ServerScriptService)
+-- Custom progress system - no DataStoreService at all.
+--
+--  Remember / Recall : keeps kills in server memory, so leaving and rejoining the
+--                      same server keeps your kills.
+--  Encode / Decode   : turns kills into a short SAVE CODE (like XXXXX-XXXXX). The player
+--                      copies it from the menu and types it in next time to get the kills
+--                      (and the unlocked characters) back, on any server.
+--
+-- Change SECRET to any number you like. This script lives in ServerScriptService, so
+-- players can never read it - that is what stops them from making up their own codes.
+
+local Store = {}
+
+local SECRET = 48271913
+local ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" -- 32 letters/digits, no 0/O/1/I
+local MAX_KILLS = 1048575 -- 20 bits
+
+----------------------------------------------------------------------
+-- Per-server memory
+----------------------------------------------------------------------
+local session = {}
+
+function Store.Remember(userId, kills)
+	session[userId] = kills
+end
+
+function Store.Recall(userId)
+	return session[userId] or 0
+end
+
+----------------------------------------------------------------------
+-- Save codes
+----------------------------------------------------------------------
+local function hash(a)
+	a = bit32.bxor(a % 4294967296, SECRET)
+	a = (a * 40503) % 4294967296
+	a = bit32.bxor(a, bit32.rshift(a, 15))
+	a = (a * 40503) % 4294967296
+	a = bit32.bxor(a, bit32.rshift(a, 13))
+	return a
+end
+
+function Store.Encode(kills)
+	local k = math.clamp(math.floor(kills), 0, MAX_KILLS)
+	local salt = math.random(0, 255)
+	local data = bit32.bxor(k, hash(salt + 1) % 1048576)
+	local chk = hash(data * 256 + salt + 7) % 4194304
+	local v = chk * 268435456 + salt * 1048576 + data -- 50 bits
+	local s = ""
+	for _ = 1, 10 do
+		local d = v % 32
+		s = ALPHABET:sub(d + 1, d + 1) .. s
+		v = (v - d) / 32
+	end
+	return s:sub(1, 5) .. "-" .. s:sub(6, 10)
+end
+
+-- returns the kills inside a code, or nil if the code is not valid
+function Store.Decode(code)
+	if type(code) ~= "string" or #code > 40 then
+		return nil
+	end
+	local clean = code:upper():gsub("[^A-Z0-9]", "")
+	if #clean ~= 10 then
+		return nil
+	end
+	local v = 0
+	for i = 1, 10 do
+		local idx = ALPHABET:find(clean:sub(i, i), 1, true)
+		if not idx then
+			return nil
+		end
+		v = v * 32 + (idx - 1)
+	end
+	local data = v % 1048576
+	local salt = math.floor(v / 1048576) % 256
+	local chk = math.floor(v / 268435456)
+	if chk ~= hash(data * 256 + salt + 7) % 4194304 then
+		return nil
+	end
+	return bit32.bxor(data, hash(salt + 1) % 1048576)
+end
+
+return Store
+]]></ProtectedString></Properties></Item><Item class="Script" referent="RBX0000001E"><Properties><string name="Name">GameServer</string><ProtectedString name="Source"><![CDATA[-- GameServer (Script, ServerScriptService)
+-- Handles: map, character models, menu/selection, spawning, tools, abilities, NPCs, saving.
+
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local SS = game:GetService("ServerStorage")
+local InsertService = game:GetService("InsertService")
+local RunService = game:GetService("RunService")
+local Debris = game:GetService("Debris")
+local TweenService = game:GetService("TweenService")
+local CollectionService = game:GetService("CollectionService")
+
+local Config = require(RS:WaitForChild("GameConfig"))
+local ProgressStore = require(script.Parent:WaitForChild("ProgressStore"))
+local SND = Config.Sounds
+
+Players.CharacterAutoLoads = false -- nobody spawns until they pick a character
+
+local A = CFrame.Angles
+local PI = math.pi
+
+----------------------------------------------------------------------
+-- Folders & remotes
+----------------------------------------------------------------------
+local ACTORS = Instance.new("Folder")
+ACTORS.Name = "Actors"
+ACTORS.Parent = workspace
+
+local EFFECTS = Instance.new("Folder")
+EFFECTS.Name = "Effects"
+EFFECTS.Parent = workspace
+
+local Remotes = Instance.new("Folder")
+Remotes.Name = "Remotes"
+Remotes.Parent = RS
+
+local R = {}
+for _, n in ipairs({
+	"SelectCharacter", "RequestMenu", "MenuCountdown", "ShowMenu", "Spawned",
+	"UseTool", "UseAbility", "AbilityCooldown", "Notify", "Shake", "Launch", "Profile",
+}) do
+	local e = Instance.new("RemoteEvent")
+	e.Name = n
+	e.Parent = Remotes
+	R[n] = e
+end
+local GetProfile = Instance.new("RemoteFunction")
+GetProfile.Name = "GetProfile"
+GetProfile.Parent = Remotes
+
+local Templates = Instance.new("Folder")
+Templates.Name = "Templates"
+Templates.Parent = SS
+
+local Previews = Instance.new("Folder")
+Previews.Name = "Previews"
+Previews.Parent = RS
+
+----------------------------------------------------------------------
+-- Small helpers
+----------------------------------------------------------------------
+local function playAt(parent, soundId, volume, pitch)
+	if not soundId or soundId == "" or not parent then
+		return
+	end
+	local s = Instance.new("Sound")
+	s.SoundId = soundId
+	s.Volume = volume or 1
+	s.PlaybackSpeed = pitch or 1
+	s.RollOffMinDistance = 25
+	s.RollOffMaxDistance = 300
+	s.Parent = parent
+	s:Play()
+	Debris:AddItem(s, 6)
+end
+
+local function newPart(parent, name, size, color, cf, opts)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.Color = color
+	p.CFrame = cf
+	p.Anchored = true
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Material = (opts and opts.Material) or Enum.Material.SmoothPlastic
+	if opts and opts.Shape then
+		p.Shape = opts.Shape
+	end
+	p.Parent = parent
+	return p
+end
+
+-- upright cylinder (diameter x height) centred on pos
+local function cyl(parent, name, diameter, height, color, pos)
+	return newPart(parent, name, Vector3.new(height, diameter, diameter), color, CFrame.new(pos) * A(0, 0, PI / 2), {
+		Shape = Enum.PartType.Cylinder,
+	})
+end
+
+local function weld(p0, p1)
+	local w = Instance.new("WeldConstraint")
+	w.Part0 = p0
+	w.Part1 = p1
+	w.Parent = p1
+	return w
+end
+
+local function motor(p0, p1, role, pivot)
+	pivot = pivot or Vector3.new(0, 0, 0)
+	local m = Instance.new("Motor6D")
+	m.Name = p1.Name .. "Joint"
+	m.Part0 = p0
+	m.Part1 = p1
+	m.C0 = p0.CFrame:Inverse() * p1.CFrame * CFrame.new(pivot)
+	m.C1 = CFrame.new(pivot)
+	if role then
+		m:SetAttribute("AnimRole", role)
+	end
+	m.Parent = p0
+	return m
+end
+
+----------------------------------------------------------------------
+-- Map (a simple city with two big roads and a plaza)
+----------------------------------------------------------------------
+local spawnPoints = {}
+
+local function buildMap()
+	local map = Instance.new("Folder")
+	map.Name = "City"
+	map.Parent = workspace
+	local rng = Random.new(12)
+
+	newPart(map, "RoadX", Vector3.new(1024, 0.2, 44), Color3.fromRGB(55, 55, 60), CFrame.new(0, 0.1, 0), { Material = Enum.Material.Asphalt })
+	newPart(map, "RoadZ", Vector3.new(44, 0.2, 1024), Color3.fromRGB(55, 55, 60), CFrame.new(0, 0.12, 0), { Material = Enum.Material.Asphalt })
+	newPart(map, "Plaza", Vector3.new(130, 0.3, 130), Color3.fromRGB(150, 150, 158), CFrame.new(0, 0.2, 0), { Material = Enum.Material.Concrete })
+
+	for i = -10, 10 do
+		local d = i * 48
+		if math.abs(d) > 80 then
+			newPart(map, "LineX", Vector3.new(26, 0.05, 1.2), Color3.fromRGB(245, 200, 40), CFrame.new(d, 0.27, 0))
+			newPart(map, "LineZ", Vector3.new(1.2, 0.05, 26), Color3.fromRGB(245, 200, 40), CFrame.new(0, 0.29, d))
+		end
+	end
+
+	for ix = 1, 4 do
+		for iz = 1, 4 do
+			for _, sx in ipairs({ -1, 1 }) do
+				for _, sz in ipairs({ -1, 1 }) do
+					local h = rng:NextInteger(40, 190)
+					local g = rng:NextInteger(95, 170)
+					local c = Color3.fromRGB(g, g + rng:NextInteger(0, 12), g + rng:NextInteger(10, 30))
+					newPart(map, "Building", Vector3.new(55, h, 55), c, CFrame.new(sx * (70 + (ix - 1) * 85), h / 2, sz * (70 + (iz - 1) * 85)), {
+						Material = Enum.Material.Concrete,
+					})
+				end
+			end
+		end
+	end
+
+	-- invisible walls so nobody leaves the map
+	for _, w in ipairs({
+		{ Vector3.new(1030, 400, 4), CFrame.new(0, 200, 514) },
+		{ Vector3.new(1030, 400, 4), CFrame.new(0, 200, -514) },
+		{ Vector3.new(4, 400, 1030), CFrame.new(514, 200, 0) },
+		{ Vector3.new(4, 400, 1030), CFrame.new(-514, 200, 0) },
+	}) do
+		local p = newPart(map, "Wall", w[1], Color3.new(1, 1, 1), w[2])
+		p.Transparency = 1
+	end
+
+	for i = 0, 7 do
+		local a = i / 8 * PI * 2
+		table.insert(spawnPoints, Vector3.new(math.cos(a) * 45, 0.4, math.sin(a) * 45))
+	end
+end
+buildMap()
+
+----------------------------------------------------------------------
+-- Built-in backup models (used only if an asset can't be loaded)
+----------------------------------------------------------------------
+local WHITE = Color3.fromRGB(245, 245, 245)
+local SKIN = Color3.fromRGB(226, 175, 135)
+local BLACK = Color3.fromRGB(28, 28, 33)
+
+local function faceDecal(part)
+	local d = Instance.new("Decal")
+	d.Face = Enum.NormalId.Front
+	d.Texture = "rbxasset://textures/face.png"
+	d.Parent = part
+end
+
+local function seg(parent, name, a, b, thickness, color)
+	local len = (b - a).Magnitude
+	return newPart(parent, name, Vector3.new(thickness, thickness, len), color, CFrame.lookAt((a + b) / 2, b)), len
+end
+
+local function fbSkibidi()
+	local m = Instance.new("Model")
+	m.Name = "SkibidiBackup"
+	local bowl = cyl(m, "Bowl", 3.6, 1.8, WHITE, Vector3.new(0, 1.9, 0))
+	local base = newPart(m, "Base", Vector3.new(2.2, 1, 2.2), WHITE, CFrame.new(0, 0.5, 0))
+	local tank = newPart(m, "Tank", Vector3.new(3, 2.4, 1), WHITE, CFrame.new(0, 2.6, 1.7))
+	local head = newPart(m, "SkHead", Vector3.new(2.2, 2.2, 2.2), SKIN, CFrame.new(0, 3.9, -0.1), { Shape = Enum.PartType.Ball })
+	faceDecal(head)
+	weld(bowl, base)
+	weld(bowl, tank)
+	motor(bowl, head, "head", Vector3.new(0, -1.1, 0))
+	m.PrimaryPart = bowl
+	return m
+end
+
+local function fbCameraman()
+	local m = Instance.new("Model")
+	m.Name = "CameraManBackup"
+	local torso = newPart(m, "Torso", Vector3.new(2.2, 2.4, 1.2), BLACK, CFrame.new(0, 3.6, 0))
+	local tie = newPart(m, "Tie", Vector3.new(0.3, 1.2, 0.1), WHITE, CFrame.new(0, 3.9, -0.66))
+	weld(torso, tie)
+	local head = newPart(m, "CamHead", Vector3.new(1.8, 1.3, 1.5), Color3.fromRGB(45, 45, 52), CFrame.new(0, 5.35, 0))
+	local lens = newPart(m, "Lens", Vector3.new(0.6, 0.9, 0.9), Color3.fromRGB(10, 10, 12), CFrame.new(0, 5.35, -1.0) * A(0, PI / 2, 0), { Shape = Enum.PartType.Cylinder })
+	local glass = newPart(m, "Glass", Vector3.new(0.1, 0.6, 0.6), Color3.fromRGB(80, 170, 255), CFrame.new(0, 5.35, -1.32) * A(0, PI / 2, 0), { Shape = Enum.PartType.Cylinder, Material = Enum.Material.Neon })
+	weld(head, lens)
+	weld(head, glass)
+	local legL = newPart(m, "LegL", Vector3.new(0.95, 2.4, 0.95), BLACK, CFrame.new(-0.55, 1.2, 0))
+	local legR = newPart(m, "LegR", Vector3.new(0.95, 2.4, 0.95), BLACK, CFrame.new(0.55, 1.2, 0))
+	local armL = newPart(m, "ArmL", Vector3.new(0.85, 2.4, 0.85), BLACK, CFrame.new(-1.55, 3.6, 0))
+	local armR = newPart(m, "ArmR", Vector3.new(0.85, 2.4, 0.85), BLACK, CFrame.new(1.55, 3.6, 0))
+	motor(torso, head, "head", Vector3.new(0, -0.65, 0))
+	motor(torso, legL, "legL", Vector3.new(0, 1.2, 0))
+	motor(torso, legR, "legR", Vector3.new(0, 1.2, 0))
+	motor(torso, armL, "armL", Vector3.new(0, 1.2, 0))
+	motor(torso, armR, "armR", Vector3.new(0, 1.2, 0))
+	m.PrimaryPart = torso
+	return m
+end
+
+local function fbStrider()
+	local m = Instance.new("Model")
+	m.Name = "StriderBackup"
+	local bowl = cyl(m, "Bowl", 3.4, 1.8, WHITE, Vector3.new(0, 6.2, 0))
+	local base = newPart(m, "Base", Vector3.new(2, 0.8, 2), WHITE, CFrame.new(0, 5.1, 0))
+	local tank = newPart(m, "Tank", Vector3.new(2.8, 2.2, 1), WHITE, CFrame.new(0, 7.1, 1.6))
+	local head = newPart(m, "SkHead", Vector3.new(2.1, 2.1, 2.1), SKIN, CFrame.new(0, 7.9, -0.1), { Shape = Enum.PartType.Ball })
+	faceDecal(head)
+	weld(bowl, base)
+	weld(bowl, tank)
+	motor(bowl, head, "head", Vector3.new(0, -1.05, 0))
+	for _, s in ipairs({ -1, 1 }) do
+		local cannon = newPart(m, "Cannon", Vector3.new(0.8, 0.8, 2.6), BLACK, CFrame.new(s * 2.3, 6.6, -0.6))
+		local tip = newPart(m, "CannonTip", Vector3.new(0.6, 0.6, 0.3), Color3.fromRGB(255, 130, 30), CFrame.new(s * 2.3, 6.6, -2.0), { Material = Enum.Material.Neon })
+		weld(bowl, cannon)
+		weld(cannon, tip)
+	end
+	for i = 1, 8 do
+		local ang = (i - 1) * PI / 4 + PI / 8
+		local dir = Vector3.new(math.cos(ang), 0, math.sin(ang))
+		local hip = Vector3.new(0, 5.2, 0) + dir * 1.3
+		local knee = hip + dir * 3.2 + Vector3.new(0, 2.2, 0)
+		local foot = hip + dir * 6.2 + Vector3.new(0, -5.2, 0)
+		local thigh, l1 = seg(m, "Thigh" .. i, hip, knee, 0.35, BLACK)
+		local shin, l2 = seg(m, "Shin" .. i, knee, foot, 0.28, BLACK)
+		local m1 = motor(bowl, thigh, "legA", Vector3.new(0, 0, l1 / 2))
+		m1:SetAttribute("LegIndex", i)
+		local m2 = motor(thigh, shin, "legB", Vector3.new(0, 0, l2 / 2))
+		m2:SetAttribute("LegIndex", i)
+	end
+	m.PrimaryPart = bowl
+	m:SetAttribute("MuzzleY", 0.74)
+	m:SetAttribute("MuzzleSep", 0.26)
+	m:SetAttribute("MuzzleZ", 0.22)
+	return m
+end
+
+local function fbGBathtub()
+	local m = Instance.new("Model")
+	m.Name = "GBathtubBackup"
+	local tub = newPart(m, "Tub", Vector3.new(7, 2.6, 4), WHITE, CFrame.new(0, 1.3, 0))
+	local water = newPart(m, "Water", Vector3.new(6, 0.3, 3), Color3.fromRGB(150, 200, 235), CFrame.new(0, 2.65, 0))
+	local neck = cyl(m, "Neck", 1.8, 3.2, SKIN, Vector3.new(0, 4.1, 0))
+	local head = newPart(m, "GHead", Vector3.new(4, 4, 4), SKIN, CFrame.new(0, 7, -0.2), { Shape = Enum.PartType.Ball })
+	faceDecal(head)
+	for _, s in ipairs({ -1, 1 }) do
+		local eye = newPart(m, "LaserEye", Vector3.new(0.6, 0.6, 0.6), Color3.fromRGB(255, 30, 30), CFrame.new(s * 0.7, 7.4, -2.0), { Shape = Enum.PartType.Ball, Material = Enum.Material.Neon })
+		weld(head, eye)
+	end
+	weld(tub, water)
+	weld(tub, neck)
+	motor(neck, head, "head", Vector3.new(0, -2, 0))
+	m.PrimaryPart = tub
+	m:SetAttribute("EyeY", 0.82)
+	m:SetAttribute("EyeSep", 0.078)
+	m:SetAttribute("EyeZ", 0.22)
+	return m
+end
+
+local FALLBACKS = {
+	skibidi = fbSkibidi,
+	cameraman = fbCameraman,
+	strider = fbStrider,
+	gbathtub = fbGBathtub,
+}
+
+----------------------------------------------------------------------
+-- Loading + assembling character models
+----------------------------------------------------------------------
+local function stripUnsafe(inst)
+	for _, d in ipairs(inst:GetDescendants()) do
+		if d:IsA("BaseScript") or d:IsA("Humanoid") or d:IsA("AnimationController") or d:IsA("Sound") then
+			d:Destroy()
+		end
+	end
+end
+
+local function hasParts(inst)
+	for _, d in ipairs(inst:GetDescendants()) do
+		if d:IsA("BasePart") then
+			return true
+		end
+	end
+	return false
+end
+
+-- returns a Model (or nil) built from the asset id
+local function loadSource(def)
+	local ok, res = pcall(function()
+		return InsertService:LoadAsset(def.AssetId)
+	end)
+	if ok and res then
+		local m = Instance.new("Model")
+		m.Name = def.Id
+		for _, c in ipairs(res:GetChildren()) do
+			c.Parent = m
+		end
+		res:Destroy()
+		stripUnsafe(m)
+		local kids = m:GetChildren()
+		if #kids == 1 and kids[1]:IsA("Model") then
+			local inner = kids[1]
+			inner.Parent = nil
+			m:Destroy()
+			m = inner
+		end
+		if hasParts(m) then
+			return m
+		end
+		m:Destroy()
+	else
+		warn("[SkibidiWarfare] LoadAsset failed for " .. def.Name .. ": " .. tostring(res))
+	end
+
+	local ok2, mp = pcall(function()
+		return InsertService:CreateMeshPartAsync("rbxassetid://" .. def.AssetId, Enum.CollisionFidelity.Box, Enum.RenderFidelity.Automatic)
+	end)
+	if ok2 and mp then
+		local m = Instance.new("Model")
+		m.Name = def.Id
+		mp.Parent = m
+		return m
+	end
+	return nil
+end
+
+local function aabb(model)
+	local minX, minY, minZ = math.huge, math.huge, math.huge
+	local maxX, maxY, maxZ = -math.huge, -math.huge, -math.huge
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") and d.Transparency < 1 then
+			local cf, s = d.CFrame, d.Size / 2
+			for sx = -1, 1, 2 do
+				for sy = -1, 1, 2 do
+					for sz = -1, 1, 2 do
+						local p = cf:PointToWorldSpace(Vector3.new(s.X * sx, s.Y * sy, s.Z * sz))
+						minX, minY, minZ = math.min(minX, p.X), math.min(minY, p.Y), math.min(minZ, p.Z)
+						maxX, maxY, maxZ = math.max(maxX, p.X), math.max(maxY, p.Y), math.max(maxZ, p.Z)
+					end
+				end
+			end
+		end
+	end
+	return Vector3.new(minX, minY, minZ), Vector3.new(maxX, maxY, maxZ)
+end
+
+local ROLE_PATTERNS = {
+	head = { "head" },
+	armL = { "leftarm", "left arm", "leftupperarm", "arm_l", "l_arm", "armleft" },
+	armR = { "rightarm", "right arm", "rightupperarm", "arm_r", "r_arm", "armright" },
+	legL = { "leftleg", "left leg", "leftupperleg", "leg_l", "l_leg", "legleft" },
+	legR = { "rightleg", "right leg", "rightupperleg", "leg_r", "r_leg", "legright" },
+}
+local PIVOT = { head = -0.5, armL = 0.5, armR = 0.5, legL = 0.5, legR = 0.5 }
+
+local function nameMatches(name, patterns)
+	local n = name:lower()
+	for _, p in ipairs(patterns) do
+		if n:find(p, 1, true) then
+			return true
+		end
+	end
+	return false
+end
+
+-- Makes sure `part` hangs off a Motor6D so the animator can move it.
+local function ensureMotor(part, root, role, pivotFrac)
+	local pivot = Vector3.new(0, part.Size.Y * pivotFrac, 0)
+	local joints = part:GetJoints()
+	for _, j in ipairs(joints) do
+		if j:IsA("Motor6D") and j.Part1 == part then
+			j:SetAttribute("AnimRole", role)
+			return j
+		end
+	end
+	local parent, bestVol, oldJoint = nil, -1, nil
+	for _, j in ipairs(joints) do
+		if j:IsA("WeldConstraint") or (j:IsA("JointInstance") and not j:IsA("Motor6D")) then
+			local other = (j.Part0 == part) and j.Part1 or j.Part0
+			if other and other ~= part then
+				local v = other.Size.X * other.Size.Y * other.Size.Z
+				if v > bestVol then
+					bestVol, parent, oldJoint = v, other, j
+				end
+			end
+		end
+	end
+	if not parent then
+		parent = root
+	end
+	if not parent or parent == part then
+		return nil
+	end
+	if oldJoint then
+		oldJoint:Destroy()
+	end
+	local m = Instance.new("Motor6D")
+	m.Name = part.Name .. "Anim"
+	m.Part0 = parent
+	m.Part1 = part
+	m.C0 = parent.CFrame:Inverse() * part.CFrame * CFrame.new(pivot)
+	m.C1 = CFrame.new(pivot)
+	m:SetAttribute("AnimRole", role)
+	m.Parent = parent
+	return m
+end
+
+local function applyRoles(src, root, def)
+	for _, role in ipairs(def.Roles or {}) do
+		if role == "legs" then
+			local i = 0
+			for _, d in ipairs(src:GetDescendants()) do
+				if d:IsA("BasePart") and d ~= root and d.Name:lower():find("leg", 1, true) then
+					i = i + 1
+					local m = ensureMotor(d, root, "legA", 0)
+					if m then
+						m:SetAttribute("LegIndex", i)
+					end
+				end
+			end
+		else
+			local pats = ROLE_PATTERNS[role]
+			if pats then
+				local target = nil
+				for _, d in ipairs(src:GetDescendants()) do
+					if d:IsA("BasePart") and d ~= root then
+						if role == "head" then
+							if d.Name:lower() == "head" then
+								target = d
+								break
+							elseif not target and nameMatches(d.Name, pats) then
+								target = d
+							end
+						elseif nameMatches(d.Name, pats) then
+							ensureMotor(d, root, role, PIVOT[role])
+						end
+					end
+				end
+				if role == "head" and target then
+					ensureMotor(target, root, role, PIVOT.head)
+				end
+			end
+		end
+	end
+end
+
+local function pickRoot(src)
+	if src.PrimaryPart then
+		return src.PrimaryPart
+	end
+	local isChild = {}
+	for _, d in ipairs(src:GetDescendants()) do
+		if d:IsA("Motor6D") and d.Part1 then
+			isChild[d.Part1] = true
+		end
+	end
+	local best, bestScore = nil, -1
+	for _, d in ipairs(src:GetDescendants()) do
+		if d:IsA("BasePart") and not isChild[d] then
+			local score = d.Size.X * d.Size.Y * d.Size.Z
+			local n = d.Name:lower()
+			if n == "humanoidrootpart" or n == "torso" or n == "uppertorso" or n == "lowertorso" or n == "body" then
+				score = score + 1e6
+			end
+			if score > bestScore then
+				best, bestScore = d, score
+			end
+		end
+	end
+	if not best then
+		for _, d in ipairs(src:GetDescendants()) do
+			if d:IsA("BasePart") then
+				best = d
+				break
+			end
+		end
+	end
+	return best
+end
+
+local function assemble(def, src, procedural)
+	local H = def.Height
+	local O = Vector3.new(0, 600 + #Templates:GetChildren() * 100, 0)
+	src.Parent = workspace
+	local root = pickRoot(src)
+	src.PrimaryPart = root
+
+	-- orientation
+	src:PivotTo(CFrame.new(O) * A(0, math.rad(def.ModelYaw or 0), 0) * src:GetPivot().Rotation)
+
+	-- scale to the wanted height
+	local mn, mx = aabb(src)
+	local height = math.max(mx.Y - mn.Y, 0.1)
+	src:ScaleTo(src:GetScale() * H / height)
+	mn, mx = aabb(src)
+
+	-- feet on the ground, centred
+	local delta = O - Vector3.new((mn.X + mx.X) / 2, mn.Y, (mn.Z + mx.Z) / 2)
+	src:PivotTo(src:GetPivot() + delta)
+	mn, mx = aabb(src)
+	local W, D = mx.X - mn.X, mx.Z - mn.Z
+
+	-- invisible controller body (this is what the Humanoid walks around with)
+	local char = Instance.new("Model")
+	char.Name = def.Id
+	local hrpH = H * 0.5
+	local hip = H * 0.2
+	local hrp = Instance.new("Part")
+	hrp.Name = "HumanoidRootPart"
+	hrp.Size = Vector3.new(math.clamp(W * 0.5, 1.5, H * 0.5), hrpH, math.clamp(D * 0.5, 1, H * 0.5))
+	hrp.Transparency = 1
+	hrp.Anchored = true
+	hrp.CFrame = CFrame.new(O + Vector3.new(0, hip + hrpH / 2, 0))
+	hrp.Parent = char
+
+	local head = Instance.new("Part")
+	head.Name = "Head"
+	head.Size = Vector3.new(1, 1, 1) * H * 0.12
+	head.Transparency = 1
+	head.CanCollide = false
+	head.Massless = true
+	head.Anchored = true
+	head.CFrame = CFrame.new(O + Vector3.new(0, H * 0.82, 0))
+	head.Parent = char
+	weld(hrp, head)
+
+	local hum = Instance.new("Humanoid")
+	hum.RigType = Enum.HumanoidRigType.R15
+	hum.AutomaticScalingEnabled = false
+	hum.HipHeight = hip
+	hum.RequiresNeck = false
+	hum.BreakJointsOnDeath = false
+	hum.MaxHealth = def.Health
+	hum.Health = def.Health
+	hum.WalkSpeed = def.Speed
+	hum.UseJumpPower = true
+	hum.JumpPower = def.Jump
+	hum.DisplayName = def.Name
+	hum.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	hum.HealthDisplayType = Enum.HumanoidHealthDisplayType.AlwaysOff
+	hum:SetAttribute("BaseSpeed", def.Speed)
+	hum.Parent = char
+	Instance.new("Animator").Parent = hum
+
+	src.Name = "Body"
+	src.Parent = char
+	char.PrimaryPart = hrp
+
+	-- joint from the controller to the visible model (animated as the "body")
+	local vr = Instance.new("Motor6D")
+	vr.Name = "VisualRoot"
+	vr.Part0 = hrp
+	vr.Part1 = root
+	vr.C0 = hrp.CFrame:Inverse() * root.CFrame
+	vr.C1 = CFrame.new()
+	vr:SetAttribute("AnimRole", "body")
+	vr.Parent = hrp
+
+	if not procedural then
+		applyRoles(src, root, def)
+	end
+
+	-- weld any loose parts so nothing gets left behind
+	local connected = {}
+	for _, p in ipairs(root:GetConnectedParts(true)) do
+		connected[p] = true
+	end
+	connected[root] = true
+	for _, d in ipairs(src:GetDescendants()) do
+		if d:IsA("BasePart") and not connected[d] then
+			weld(root, d)
+		end
+	end
+
+	-- physics setup: only the controller collides
+	for _, d in ipairs(char:GetDescendants()) do
+		if d:IsA("BasePart") and d ~= hrp then
+			d.CanCollide = false
+			d.CanTouch = false
+			d.Massless = true
+		end
+	end
+	hrp.CanCollide = true
+
+	-- attachments for lasers / blaster
+	local base = hip + hrpH / 2
+	local function att(name, x, y, z)
+		local a = Instance.new("Attachment")
+		a.Name = name
+		a.Position = Vector3.new(x * H, H * y - base, -H * z)
+		a.Parent = hrp
+	end
+	local eye = def.Eye
+	local ey = src:GetAttribute("EyeY") or (eye and eye.Y)
+	if ey then
+		local sep = src:GetAttribute("EyeSep") or (eye and eye.Sep) or 0.05
+		local ez = src:GetAttribute("EyeZ") or (eye and eye.Z) or 0.1
+		att("EyeL", -sep, ey, ez)
+		att("EyeR", sep, ey, ez)
+	end
+	local mz = def.Muzzle
+	local my = src:GetAttribute("MuzzleY") or (mz and mz.Y)
+	if my then
+		local sep = src:GetAttribute("MuzzleSep") or (mz and mz.Sep) or 0.2
+		local z = src:GetAttribute("MuzzleZ") or (mz and mz.Z) or 0.2
+		att("MuzzleL", -sep, my, z)
+		att("MuzzleR", sep, my, z)
+	end
+
+	char:SetAttribute("CharId", def.Id)
+	char:SetAttribute("Height", H)
+	return char
+end
+
+local templatesReady = false
+local function buildTemplates()
+	for _, def in ipairs(Config.Characters) do
+		local src = loadSource(def)
+		local procedural = false
+		if not src then
+			procedural = true
+			src = FALLBACKS[def.Id]()
+			RS:SetAttribute("Fallback_" .. def.Id, true)
+			warn("[SkibidiWarfare] Using built-in backup model for " .. def.Name)
+		else
+			print("[SkibidiWarfare] Loaded model for " .. def.Name)
+		end
+		local ok, res = pcall(assemble, def, src, procedural)
+		if not ok then
+			warn("[SkibidiWarfare] Could not assemble " .. def.Name .. ": " .. tostring(res))
+			if not procedural then
+				src:Destroy()
+				RS:SetAttribute("Fallback_" .. def.Id, true)
+				local fb = FALLBACKS[def.Id]()
+				res = assemble(def, fb, true)
+			end
+		end
+		local char = res
+		char.Parent = Templates
+		local pv = char:Clone()
+		pv.Parent = Previews
+	end
+	templatesReady = true
+	RS:SetAttribute("TemplatesReady", true)
+end
+
+----------------------------------------------------------------------
+-- Player profiles (kills are saved)
+----------------------------------------------------------------------
+local profiles = {}
+
+local function isUnlocked(pr, def)
+	return Config.UnlockAll or def.Starter or pr.kills >= (def.UnlockKills or 0)
+end
+
+local function profilePayload(player)
+	local pr = profiles[player]
+	local unlocked = {}
+	for _, def in ipairs(Config.Characters) do
+		unlocked[def.Id] = isUnlocked(pr, def)
+	end
+	return { kills = pr.kills, unlocked = unlocked }
+end
+
+local function saveProfile(player)
+	local pr = profiles[player]
+	if pr then
+		ProgressStore.Remember(player.UserId, pr.kills)
+	end
+end
+
+GetProfile.OnServerInvoke = function(player)
+	local t = 0
+	while not profiles[player] and t < 10 do
+		task.wait(0.1)
+		t = t + 0.1
+	end
+	if not profiles[player] then
+		return { kills = 0, unlocked = {} }
+	end
+	return profilePayload(player)
+end
+
+-- Save codes: the player copies a code from the menu and types it in next time.
+local GetCode = Instance.new("RemoteFunction")
+GetCode.Name = "GetCode"
+GetCode.Parent = Remotes
+
+local RedeemCode = Instance.new("RemoteFunction")
+RedeemCode.Name = "RedeemCode"
+RedeemCode.Parent = Remotes
+
+local lastRedeem = {}
+
+GetCode.OnServerInvoke = function(player)
+	local pr = profiles[player]
+	if not pr then
+		return nil
+	end
+	return ProgressStore.Encode(pr.kills)
+end
+
+RedeemCode.OnServerInvoke = function(player, code)
+	local pr = profiles[player]
+	if not pr or type(code) ~= "string" then
+		return false, "Invalid code"
+	end
+	if os.clock() - (lastRedeem[player] or -10) < 3 then
+		return false, "Wait a moment..."
+	end
+	lastRedeem[player] = os.clock()
+	local kills = ProgressStore.Decode(code)
+	if not kills then
+		return false, "That code is not valid"
+	end
+	if kills <= pr.kills then
+		return false, "You already have " .. pr.kills .. " kills"
+	end
+	pr.kills = kills
+	local ls = player:FindFirstChild("leaderstats")
+	if ls and ls:FindFirstChild("Kills") then
+		ls.Kills.Value = kills
+	end
+	saveProfile(player)
+	R.Profile:FireClient(player, profilePayload(player))
+	return true, "Loaded " .. kills .. " kills"
+end
+
+----------------------------------------------------------------------
+-- Combat helpers
+----------------------------------------------------------------------
+local overlap = OverlapParams.new()
+overlap.FilterType = Enum.RaycastFilterType.Include
+overlap.FilterDescendantsInstances = { ACTORS }
+
+local function rayParamsFor(char)
+	local rp = RaycastParams.new()
+	rp.FilterType = Enum.RaycastFilterType.Exclude
+	rp.FilterDescendantsInstances = { char, EFFECTS }
+	return rp
+end
+
+local function humanoidOf(part)
+	local a = part.Parent
+	while a and a ~= ACTORS and a ~= workspace do
+		local h = a:FindFirstChildOfClass("Humanoid")
+		if h then
+			return h, a
+		end
+		a = a.Parent
+	end
+	return nil, nil
+end
+
+local function collectHumanoids(parts, exclude)
+	local seen, out = {}, {}
+	for _, p in ipairs(parts) do
+		local h, model = humanoidOf(p)
+		if h and model ~= exclude and not seen[h] and h.Health > 0 then
+			seen[h] = true
+			table.insert(out, { hum = h, model = model })
+		end
+	end
+	return out
+end
+
+local function inRadius(pos, radius, exclude)
+	return collectHumanoids(workspace:GetPartBoundsInRadius(pos, radius, overlap), exclude)
+end
+
+local function inBox(cf, size, exclude)
+	return collectHumanoids(workspace:GetPartBoundsInBox(cf, size, overlap), exclude)
+end
+
+-- Particle emitter burst at a position (sparks, dust, puffs)
+local function burst(pos, color, count, speed, size, life, spread)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Transparency = 1
+	p.Size = Vector3.new(1, 1, 1)
+	p.Position = pos
+	p.Parent = EFFECTS
+	local e = Instance.new("ParticleEmitter")
+	e.Enabled = false
+	e.Rate = 0
+	e.Color = ColorSequence.new(color)
+	e.LightEmission = 0.8
+	e.Size = NumberSequence.new(size, 0)
+	e.Transparency = NumberSequence.new(0, 1)
+	e.Lifetime = NumberRange.new(life * 0.6, life)
+	e.Speed = NumberRange.new(speed * 0.5, speed)
+	e.SpreadAngle = Vector2.new(spread or 180, spread or 180)
+	e.Drag = 2
+	e.Parent = p
+	e:Emit(count)
+	Debris:AddItem(p, life + 0.5)
+end
+
+local function damage(hum, amount, attacker)
+	if hum.Health <= 0 then
+		return
+	end
+	if attacker then
+		hum:SetAttribute("LastAttacker", attacker.UserId)
+	end
+	local tr = hum.Parent and hum.Parent:FindFirstChild("HumanoidRootPart")
+	if tr then
+		burst(tr.Position, Color3.fromRGB(255, 220, 120), 6, 18, 0.6, 0.5)
+	end
+	hum:TakeDamage(amount)
+end
+
+local function stun(hum, secs)
+	local base = hum:GetAttribute("BaseSpeed") or 16
+	hum:SetAttribute("StunUntil", os.clock() + secs)
+	hum.WalkSpeed = base * 0.15
+	task.delay(secs + 0.05, function()
+		if hum.Parent and (hum:GetAttribute("StunUntil") or 0) <= os.clock() then
+			hum.WalkSpeed = base
+		end
+	end)
+end
+
+-- push a character (players are pushed on their own client because they own their physics)
+local function launch(model, vel)
+	local hrp = model:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	local plr = Players:GetPlayerFromCharacter(model)
+	if plr then
+		R.Launch:FireClient(plr, vel)
+	elseif not hrp.Anchored then
+		hrp:ApplyImpulse(vel * hrp.AssemblyMass)
+	end
+end
+
+local function flat(v)
+	local f = Vector3.new(v.X, 0, v.Z)
+	if f.Magnitude < 0.05 then
+		return Vector3.new(0, 0, -1)
+	end
+	return f.Unit
+end
+
+local function setAtk(char, name, idx)
+	char:SetAttribute("AtkName", name)
+	char:SetAttribute("AtkIdx", idx or 1)
+	char:SetAttribute("AtkTime", workspace:GetServerTimeNow())
+end
+
+local function setAb(char, name)
+	char:SetAttribute("AbName", name)
+	char:SetAttribute("AbTime", workspace:GetServerTimeNow())
+end
+
+local function tracer(a, b, color, thick)
+	local len = (b - a).Magnitude
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Material = Enum.Material.Neon
+	p.Color = color
+	p.Size = Vector3.new(thick, thick, len)
+	p.CFrame = CFrame.lookAt(a, b) * CFrame.new(0, 0, -len / 2)
+	p.Parent = EFFECTS
+	TweenService:Create(p, TweenInfo.new(0.15), { Transparency = 1 }):Play()
+	Debris:AddItem(p, 0.2)
+end
+
+local function groundY(char, hrp)
+	local r = workspace:Raycast(hrp.Position, Vector3.new(0, -600, 0), rayParamsFor(char))
+	if r then
+		return r.Position.Y + 0.3
+	end
+	return hrp.Position.Y - hrp.Size.Y / 2
+end
+
+local function ringFx(pos, radius, color, thick)
+	thick = thick or 0.6
+	local p = Instance.new("Part")
+	p.Shape = Enum.PartType.Cylinder
+	p.Material = Enum.Material.Neon
+	p.Color = color
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.Transparency = 0.2
+	p.Size = Vector3.new(thick, 2, 2)
+	p.CFrame = CFrame.new(pos) * A(0, 0, PI / 2)
+	p.Parent = EFFECTS
+	TweenService:Create(p, TweenInfo.new(0.55, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = Vector3.new(thick, radius * 2, radius * 2),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(p, 0.7)
+	burst(pos + Vector3.new(0, 1, 0), color, 30 + math.floor(radius), radius * 1.2, math.max(2, radius * 0.12), 0.8)
+end
+
+local function aoe(player, pr, radius, dmg, kb, stunSecs)
+	local char = pr.char
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	if not hrp then
+		return
+	end
+	for _, t in ipairs(inRadius(hrp.Position, radius, char)) do
+		damage(t.hum, dmg, player)
+		if stunSecs then
+			stun(t.hum, stunSecs)
+		end
+		local troot = t.model:FindFirstChild("HumanoidRootPart")
+		if troot then
+			local dir = flat(troot.Position - hrp.Position)
+			launch(t.model, dir * kb + Vector3.new(0, kb * 0.45, 0))
+			playAt(troot, SND.Hit, 0.8)
+		end
+	end
+end
+
+local function shakeNear(pos, range, intensity, secs)
+	for _, p in ipairs(Players:GetPlayers()) do
+		local c = p.Character
+		local h = c and c:FindFirstChild("HumanoidRootPart")
+		if h and (h.Position - pos).Magnitude <= range then
+			R.Shake:FireClient(p, intensity, secs)
+		end
+	end
+end
+
+local function alive(pr, char)
+	return pr.char == char and char.Parent ~= nil and char:FindFirstChildOfClass("Humanoid") ~= nil
+		and char:FindFirstChildOfClass("Humanoid").Health > 0
+end
+
+----------------------------------------------------------------------
+-- Tools (primary attack of every character)
+----------------------------------------------------------------------
+local Tools = {}
+local Abilities = {}
+local lasers = {}
+
+local function melee(player, pr, o)
+	local char = pr.char
+	local hrp = char.HumanoidRootPart
+	local scale = pr.def.Height / 6
+	task.delay(o.delay, function()
+		if not alive(pr, char) then
+			return
+		end
+		local reach, width = o.reach * scale, o.width * scale
+		local cf = hrp.CFrame * CFrame.new(0, 0, -(hrp.Size.Z / 2 + reach / 2))
+		for _, t in ipairs(inBox(cf, Vector3.new(width, pr.def.Height * 0.9, reach), char)) do
+			damage(t.hum, o.dmg, player)
+			local troot = t.model:FindFirstChild("HumanoidRootPart")
+			if troot then
+				launch(t.model, hrp.CFrame.LookVector * o.kb + Vector3.new(0, o.kb * 0.3, 0))
+				playAt(troot, SND.Hit, 0.9)
+			end
+		end
+	end)
+end
+
+Tools.skibidi = function(player, pr, aim, held)
+	if held == false or os.clock() < pr.toolReady then
+		return
+	end
+	pr.toolReady = os.clock() + 0.7
+	local hrp = pr.char.HumanoidRootPart
+	setAtk(pr.char, "Bonk", 1)
+	playAt(hrp, SND.Bonk, 1, 1.15)
+	melee(player, pr, { reach = 7, width = 7, dmg = 20, kb = 35, delay = 0.15 })
+end
+
+Tools.cameraman = function(player, pr, aim, held)
+	if held == false or os.clock() < pr.toolReady then
+		return
+	end
+	local t = os.clock()
+	if t - pr.comboT > 1.1 then
+		pr.combo = 0
+	end
+	pr.combo = pr.combo % 3 + 1
+	pr.comboT = t
+	pr.toolReady = t + (pr.combo == 3 and 0.6 or 0.38)
+	local hrp = pr.char.HumanoidRootPart
+	setAtk(pr.char, "Punch", pr.combo)
+	playAt(hrp, SND.Punch, 1, 0.9 + pr.combo * 0.12)
+	local last = pr.combo == 3
+	melee(player, pr, { reach = 8, width = 7, dmg = last and 30 or 16, kb = last and 55 or 22, delay = 0.12 })
+end
+
+Tools.strider = function(player, pr, aim, held)
+	if held == false or os.clock() < pr.toolReady then
+		return
+	end
+	pr.toolReady = os.clock() + 0.28
+	local char = pr.char
+	local hrp = char.HumanoidRootPart
+	pr.muzzle = 3 - (pr.muzzle or 1)
+	local att = hrp:FindFirstChild(pr.muzzle == 1 and "MuzzleL" or "MuzzleR")
+	local origin = att and att.WorldPosition or hrp.Position
+	local dir = aim - origin
+	if dir.Magnitude < 1 then
+		dir = hrp.CFrame.LookVector
+	end
+	dir = dir.Unit
+	local res = workspace:Raycast(origin, dir * 400, rayParamsFor(char))
+	local endPos = res and res.Position or (origin + dir * 400)
+	if res then
+		local h, model = humanoidOf(res.Instance)
+		if h and h.Health > 0 then
+			damage(h, 20, player)
+			playAt(res.Instance, SND.Hit, 0.8)
+		end
+	end
+	tracer(origin, endPos, Color3.fromRGB(255, 140, 40), 0.55)
+	burst(origin, Color3.fromRGB(255, 170, 60), 6, 14, 0.9, 0.25, 40)
+	burst(endPos, Color3.fromRGB(255, 140, 40), 8, 16, 0.7, 0.4)
+	playAt(hrp, SND.Blaster, 0.7, 1.25)
+	setAtk(char, "Blast", 1)
+end
+
+local function stopLaser(player)
+	local l = lasers[player]
+	if not l then
+		return
+	end
+	lasers[player] = nil
+	for _, b in ipairs(l.beams) do
+		b:Destroy()
+	end
+	if l.sound then
+		l.sound:Destroy()
+	end
+	if l.hit then
+		l.hit:Destroy()
+	end
+	for _, e in ipairs(l.emitters or {}) do
+		e:Destroy()
+	end
+	local pr = profiles[player]
+	if pr and pr.char then
+		pr.char:SetAttribute("Laser", false)
+	end
+end
+
+Tools.gbathtub = function(player, pr, aim, held)
+	if held == false then
+		stopLaser(player)
+		return
+	end
+	local l = lasers[player]
+	if not l then
+		l = { beams = {}, tick = 0 }
+		for i = 1, 2 do
+			local b = Instance.new("Part")
+			b.Anchored = true
+			b.CanCollide = false
+			b.CanQuery = false
+			b.CanTouch = false
+			b.Material = Enum.Material.Neon
+			b.Color = Color3.fromRGB(255, 40, 40)
+			b.Size = Vector3.new(1, 1, 1)
+			b.Parent = EFFECTS
+			l.beams[i] = b
+		end
+		local s = Instance.new("Sound")
+		s.SoundId = SND.LaserLoop
+		s.Looped = true
+		s.Volume = 0.7
+		s.PlaybackSpeed = 1.7
+		s.RollOffMinDistance = 40
+		s.RollOffMaxDistance = 400
+		s.Parent = pr.char.HumanoidRootPart
+		s:Play()
+		l.sound = s
+		local H = pr.def.Height
+		l.emitters = {}
+		for _, n in ipairs({ "EyeL", "EyeR" }) do
+			local att = pr.char.HumanoidRootPart:FindFirstChild(n)
+			if att then
+				local e = Instance.new("ParticleEmitter")
+				e.Color = ColorSequence.new(Color3.fromRGB(255, 60, 60))
+				e.LightEmission = 1
+				e.Size = NumberSequence.new(H * 0.05, 0)
+				e.Transparency = NumberSequence.new(0, 1)
+				e.Lifetime = NumberRange.new(0.2, 0.4)
+				e.Speed = NumberRange.new(2, 8)
+				e.SpreadAngle = Vector2.new(180, 180)
+				e.Rate = 60
+				e.Parent = att
+				table.insert(l.emitters, e)
+			end
+		end
+		local hit = Instance.new("Part")
+		hit.Anchored = true
+		hit.CanCollide = false
+		hit.CanQuery = false
+		hit.CanTouch = false
+		hit.Transparency = 1
+		hit.Size = Vector3.new(1, 1, 1)
+		hit.Parent = EFFECTS
+		local he = Instance.new("ParticleEmitter")
+		he.Color = ColorSequence.new(Color3.fromRGB(255, 150, 50))
+		he.LightEmission = 1
+		he.Size = NumberSequence.new(H * 0.06, 0)
+		he.Transparency = NumberSequence.new(0, 1)
+		he.Lifetime = NumberRange.new(0.25, 0.5)
+		he.Speed = NumberRange.new(10, 30)
+		he.SpreadAngle = Vector2.new(180, 180)
+		he.Rate = 90
+		he.Enabled = false
+		he.Parent = hit
+		l.hit, l.hitEmitter = hit, he
+		lasers[player] = l
+		pr.char:SetAttribute("Laser", true)
+	end
+	l.aim = aim
+	l.untilT = os.clock() + 0.35
+end
+
+RunService.Heartbeat:Connect(function(dt)
+	for player, l in pairs(lasers) do
+		local pr = profiles[player]
+		local char = pr and pr.char
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if not hrp or not hum or hum.Health <= 0 or os.clock() > l.untilT then
+			stopLaser(player)
+		else
+			l.tick = l.tick + dt
+			local doDamage = l.tick >= 0.1
+			if doDamage then
+				l.tick = 0
+			end
+			local thick = pr.def.Height * 0.025
+			local rp = rayParamsFor(char)
+			local names = { "EyeL", "EyeR" }
+			for i = 1, 2 do
+				local att = hrp:FindFirstChild(names[i])
+				local beam = l.beams[i]
+				if att and beam then
+					local origin = att.WorldPosition
+					local dir = l.aim - origin
+					if dir.Magnitude < 1 then
+						dir = hrp.CFrame.LookVector
+					end
+					dir = dir.Unit
+					local res = workspace:Raycast(origin, dir * 700, rp)
+					local endPos = res and res.Position or (origin + dir * 700)
+					local len = (endPos - origin).Magnitude
+					beam.Size = Vector3.new(thick, thick, len)
+					if i == 1 and l.hit then
+						l.hit.Position = endPos
+						l.hitEmitter.Enabled = res ~= nil
+					end
+					beam.CFrame = CFrame.lookAt(origin, endPos) * CFrame.new(0, 0, -len / 2)
+					if doDamage and res then
+						local h, model = humanoidOf(res.Instance)
+						if h and h.Health > 0 then
+							damage(h, 4, player)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+
+----------------------------------------------------------------------
+-- Abilities (one special move per character, key Q / on-screen button)
+----------------------------------------------------------------------
+Abilities.skibidi = function(player, pr, aim)
+	local char = pr.char
+	local hrp = char.HumanoidRootPart
+	setAb(char, "Scream")
+	playAt(hrp, SND.Scream, 1, 1.5)
+	ringFx(Vector3.new(hrp.Position.X, groundY(char, hrp), hrp.Position.Z), 24, Color3.fromRGB(120, 220, 255))
+	aoe(player, pr, 24, 26, 60, 1.4)
+end
+
+Abilities.cameraman = function(player, pr, aim)
+	local char = pr.char
+	local hrp = char.HumanoidRootPart
+	setAb(char, "Slam")
+	playAt(hrp, SND.Leap, 1, 1)
+	launch(char, Vector3.new(0, 55, 0))
+	task.delay(0.6, function()
+		if not alive(pr, char) then
+			return
+		end
+		playAt(hrp, SND.Slam, 1, 1.1)
+		ringFx(Vector3.new(hrp.Position.X, groundY(char, hrp), hrp.Position.Z), 18, Color3.fromRGB(255, 220, 120))
+		aoe(player, pr, 18, 34, 55, 1)
+		shakeNear(hrp.Position, 60, 0.6, 0.35)
+	end)
+end
+
+Abilities.strider = function(player, pr, aim)
+	local char = pr.char
+	local hrp = char.HumanoidRootPart
+	setAb(char, "Leap")
+	playAt(hrp, SND.Leap, 1, 0.8)
+	local dir = flat((aim or (hrp.Position + hrp.CFrame.LookVector * 50)) - hrp.Position)
+	launch(char, dir * 70 + Vector3.new(0, 60, 0))
+	task.spawn(function()
+		task.wait(0.5)
+		local waited = 0
+		while alive(pr, char) and waited < 2 do
+			local r = workspace:Raycast(hrp.Position, Vector3.new(0, -1, 0) * (hrp.Size.Y / 2 + char.Humanoid.HipHeight + 1.5), rayParamsFor(char))
+			if r then
+				break
+			end
+			task.wait(0.1)
+			waited = waited + 0.1
+		end
+		if not alive(pr, char) then
+			return
+		end
+		playAt(hrp, SND.Slam, 1, 0.9)
+		ringFx(Vector3.new(hrp.Position.X, groundY(char, hrp), hrp.Position.Z), 22, Color3.fromRGB(255, 140, 40))
+		aoe(player, pr, 22, 38, 50, 1.2)
+		shakeNear(hrp.Position, 80, 0.5, 0.3)
+	end)
+end
+
+Abilities.gbathtub = function(player, pr, aim)
+	local char = pr.char
+	local hrp = char.HumanoidRootPart
+	setAb(char, "Stomp")
+	playAt(hrp, SND.Leap, 1, 0.6)
+	task.delay(0.3, function()
+		if not alive(pr, char) then
+			return
+		end
+		local gy = groundY(char, hrp)
+		local pos = Vector3.new(hrp.Position.X, gy, hrp.Position.Z)
+		playAt(hrp, SND.Stomp, 1, 0.7)
+		ringFx(pos, 60, Color3.fromRGB(255, 80, 80), 1.2)
+		task.delay(0.15, function()
+			ringFx(pos, 40, Color3.fromRGB(255, 180, 90), 1.2)
+		end)
+		aoe(player, pr, 60, 60, 90, 1.6)
+		shakeNear(hrp.Position, 200, 1.4, 0.6)
+	end)
+end
+
+----------------------------------------------------------------------
+-- Kills & unlocks
+----------------------------------------------------------------------
+local function creditKill(hum)
+	local id = hum:GetAttribute("LastAttacker")
+	if not id then
+		return
+	end
+	local killer = Players:GetPlayerByUserId(id)
+	local pr = killer and profiles[killer]
+	if not pr then
+		return
+	end
+	pr.kills = pr.kills + 1
+	ProgressStore.Remember(killer.UserId, pr.kills)
+	local ls = killer:FindFirstChild("leaderstats")
+	if ls and ls:FindFirstChild("Kills") then
+		ls.Kills.Value = pr.kills
+	end
+	R.Notify:FireClient(killer, "+1 Kill")
+	for _, def in ipairs(Config.Characters) do
+		if not def.Starter and def.UnlockKills > 0 and pr.kills == def.UnlockKills then
+			R.Notify:FireClient(killer, def.Name .. " unlocked!")
+			R.Profile:FireClient(killer, profilePayload(killer))
+			playAt(killer.Character and killer.Character:FindFirstChild("HumanoidRootPart"), SND.Unlock, 1)
+		end
+	end
+	R.Profile:FireClient(killer, profilePayload(killer))
+end
+
+----------------------------------------------------------------------
+-- Menu / spawning
+----------------------------------------------------------------------
+local function clearBackpack(player)
+	local bp = player:FindFirstChildOfClass("Backpack")
+	if bp then
+		bp:ClearAllChildren()
+	end
+end
+
+local function returnToMenu(player, reason)
+	local pr = profiles[player]
+	if not pr then
+		return
+	end
+	stopLaser(player)
+	pr.leaving = false
+	pr.leaveToken = nil
+	local c = player.Character
+	pr.char = nil
+	pr.def = nil
+	player.Character = nil
+	if c then
+		c:Destroy()
+	end
+	clearBackpack(player)
+	R.ShowMenu:FireClient(player, reason or "")
+end
+
+local function pickSpawn()
+	return spawnPoints[math.random(1, #spawnPoints)]
+end
+
+local function giveTool(player, def)
+	local bp = player:FindFirstChildOfClass("Backpack")
+	if not bp then
+		bp = Instance.new("Backpack")
+		bp.Parent = player
+	end
+	bp:ClearAllChildren()
+	local tool = Instance.new("Tool")
+	tool.Name = def.Tool.Name
+	tool.ToolTip = def.Tool.Desc
+	tool.RequiresHandle = false
+	tool.CanBeDropped = false
+	tool:SetAttribute("Hold", def.Tool.Hold == true)
+	tool.Parent = bp
+	return tool
+end
+
+local function spawnPlayer(player, def)
+	local pr = profiles[player]
+	if not pr or pr.char then
+		return
+	end
+	local tpl = Templates:FindFirstChild(def.Id)
+	if not tpl then
+		return
+	end
+	pr.spawning = true
+
+	local char = tpl:Clone()
+	char.Name = player.Name
+	local hrp = char.HumanoidRootPart
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	local sp = pickSpawn()
+	char:PivotTo(CFrame.new(sp + Vector3.new(0, hrp.Size.Y / 2 + hum.HipHeight + 3, 0)))
+	for _, d in ipairs(char:GetDescendants()) do
+		if d:IsA("BasePart") then
+			d.Anchored = false
+		end
+	end
+	hum.DisplayName = player.DisplayName
+
+	pr.char = char
+	pr.def = def
+	pr.toolReady = 0
+	pr.abilityReady = 0
+	pr.combo = 0
+	pr.comboT = 0
+	pr.muzzle = 1
+
+	player.Character = char
+	char.Parent = ACTORS
+	pcall(function()
+		hrp:SetNetworkOwner(player)
+	end)
+	CollectionService:AddTag(char, "SkibidiChar")
+
+	local ff = Instance.new("ForceField")
+	ff.Visible = false
+	ff.Parent = char
+	Debris:AddItem(ff, 2.5)
+
+	local tool = giveTool(player, def)
+	R.Spawned:FireClient(player, def.Id, def.Height)
+	playAt(hrp, SND.Spawn, 0.8)
+	burst(hrp.Position, Color3.fromRGB(120, 220, 255), 40, 30, def.Height * 0.2, 1)
+
+	hum.Died:Connect(function()
+		stopLaser(player)
+		playAt(hrp, SND.Death, 1, 0.8)
+		burst(hrp.Position, Color3.fromRGB(255, 255, 255), 40, 25, def.Height * 0.2, 1)
+		creditKill(hum)
+		task.delay(Config.RespawnToMenuDelay, function()
+			if pr.char == char then
+				returnToMenu(player, "You were defeated")
+			end
+		end)
+	end)
+
+	task.defer(function()
+		if tool.Parent and hum.Parent then
+			hum:EquipTool(tool)
+		end
+	end)
+	pr.spawning = false
+end
+
+R.SelectCharacter.OnServerEvent:Connect(function(player, charId)
+	local pr = profiles[player]
+	if not pr or pr.char or pr.spawning or type(charId) ~= "string" then
+		return
+	end
+	local def = Config.ById[charId]
+	if not def then
+		return
+	end
+	if not isUnlocked(pr, def) then
+		R.Notify:FireClient(player, def.Name .. " needs " .. def.UnlockKills .. " kills")
+		return
+	end
+	while not templatesReady do
+		task.wait(0.2)
+	end
+	spawnPlayer(player, def)
+end)
+
+R.RequestMenu.OnServerEvent:Connect(function(player)
+	local pr = profiles[player]
+	if not pr or not pr.char then
+		return
+	end
+	if pr.leaving then
+		pr.leaving = false
+		pr.leaveToken = nil
+		R.MenuCountdown:FireClient(player, -1)
+		return
+	end
+	pr.leaving = true
+	local token = {}
+	pr.leaveToken = token
+	task.spawn(function()
+		for i = Config.MenuReturnSeconds, 1, -1 do
+			if pr.leaveToken ~= token or not pr.leaving then
+				return
+			end
+			R.MenuCountdown:FireClient(player, i)
+			task.wait(1)
+		end
+		if pr.leaveToken ~= token or not pr.leaving then
+			return
+		end
+		returnToMenu(player, "")
+	end)
+end)
+
+R.UseTool.OnServerEvent:Connect(function(player, toolName, aim, held)
+	local pr = profiles[player]
+	if not pr or not pr.char or not pr.def then
+		return
+	end
+	local hum = pr.char:FindFirstChildOfClass("Humanoid")
+	if not hum or hum.Health <= 0 then
+		stopLaser(player)
+		return
+	end
+	local tool = pr.char:FindFirstChildOfClass("Tool")
+	if not tool or tool.Name ~= toolName then
+		return
+	end
+	if held ~= false and typeof(aim) ~= "Vector3" then
+		return
+	end
+	local fn = Tools[pr.def.Id]
+	if fn then
+		fn(player, pr, aim, held)
+	end
+end)
+
+R.UseAbility.OnServerEvent:Connect(function(player, aim)
+	local pr = profiles[player]
+	if not pr or not pr.char or not pr.def then
+		return
+	end
+	local hum = pr.char:FindFirstChildOfClass("Humanoid")
+	if not hum or hum.Health <= 0 or os.clock() < pr.abilityReady then
+		return
+	end
+	local fn = Abilities[pr.def.Id]
+	if not fn then
+		return
+	end
+	pr.abilityReady = os.clock() + pr.def.Ability.Cooldown
+	R.AbilityCooldown:FireClient(player, pr.def.Ability.Cooldown)
+	fn(player, pr, typeof(aim) == "Vector3" and aim or nil)
+end)
+
+----------------------------------------------------------------------
+-- Training "Agents" (NPCs you can kill to earn kills and unlock characters)
+----------------------------------------------------------------------
+local npcRng = Random.new()
+local function roadPoint()
+	if npcRng:NextInteger(0, 1) == 0 then
+		return Vector3.new(npcRng:NextNumber(-300, 300), 3, npcRng:NextNumber(-9, 9))
+	end
+	return Vector3.new(npcRng:NextNumber(-9, 9), 3, npcRng:NextNumber(-300, 300))
+end
+
+local spawnNpc
+spawnNpc = function()
+	local m = Instance.new("Model")
+	m.Name = "Agent"
+	local hrp = Instance.new("Part")
+	hrp.Name = "HumanoidRootPart"
+	hrp.Size = Vector3.new(2, 2, 1)
+	hrp.Transparency = 1
+	hrp.Parent = m
+	local body = Instance.new("Part")
+	body.Name = "Body"
+	body.Size = Vector3.new(2, 3.4, 1)
+	body.Color = Color3.fromRGB(30, 30, 35)
+	body.Material = Enum.Material.SmoothPlastic
+	body.CanCollide = false
+	body.Massless = true
+	body.Parent = m
+	local head = Instance.new("Part")
+	head.Name = "Head"
+	head.Shape = Enum.PartType.Ball
+	head.Size = Vector3.new(1.4, 1.4, 1.4)
+	head.Color = SKIN
+	head.CanCollide = false
+	head.Massless = true
+	head.Parent = m
+	faceDecal(head)
+	local hum = Instance.new("Humanoid")
+	hum.RigType = Enum.HumanoidRigType.R15
+	hum.AutomaticScalingEnabled = false
+	hum.HipHeight = 1.4
+	hum.RequiresNeck = false
+	hum.MaxHealth = 100
+	hum.Health = 100
+	hum.WalkSpeed = 13
+	hum.DisplayName = "Agent"
+	hum.HealthDisplayDistance = 70
+	hum.NameDisplayDistance = 70
+	hum:SetAttribute("BaseSpeed", 13)
+	hum.Parent = m
+	m.PrimaryPart = hrp
+	m:PivotTo(CFrame.new(roadPoint()))
+	body.CFrame = hrp.CFrame * CFrame.new(0, -0.7, 0)
+	head.CFrame = hrp.CFrame * CFrame.new(0, 1.7, 0)
+	weld(hrp, body)
+	weld(hrp, head)
+	m.Parent = ACTORS
+
+	hum.Died:Connect(function()
+		burst(hrp.Position, Color3.fromRGB(60, 60, 70), 20, 20, 1, 0.8)
+		creditKill(hum)
+		task.delay(4, function()
+			m:Destroy()
+			spawnNpc()
+		end)
+	end)
+
+	task.spawn(function()
+		local nextWander, nextHit = 0, 0
+		while m.Parent and hum.Health > 0 do
+			task.wait(0.5)
+			local target, best = nil, 45
+			for _, p in ipairs(Players:GetPlayers()) do
+				local c = p.Character
+				local th = c and c:FindFirstChild("HumanoidRootPart")
+				local ch = c and c:FindFirstChildOfClass("Humanoid")
+				if th and ch and ch.Health > 0 then
+					local d = (th.Position - hrp.Position).Magnitude
+					if d < best then
+						best, target = d, th
+					end
+				end
+			end
+			if target then
+				hum:MoveTo(target.Position)
+				local reach = 6 + target.Size.Z
+				if best < reach + 4 and os.clock() > nextHit then
+					nextHit = os.clock() + 1
+					local tp = Players:GetPlayerFromCharacter(target.Parent)
+					local th = target.Parent:FindFirstChildOfClass("Humanoid")
+					if th then
+						th:TakeDamage(6)
+					end
+				end
+			elseif os.clock() > nextWander then
+				nextWander = os.clock() + npcRng:NextNumber(3, 6)
+				hum:MoveTo(roadPoint())
+			end
+		end
+	end)
+end
+
+----------------------------------------------------------------------
+-- Players joining / leaving
+----------------------------------------------------------------------
+local function onPlayerAdded(player)
+	local pr = { kills = 0, toolReady = 0, abilityReady = 0, combo = 0, comboT = 0 }
+	profiles[player] = pr
+	local ls = Instance.new("Folder")
+	ls.Name = "leaderstats"
+	local kills = Instance.new("IntValue")
+	kills.Name = "Kills"
+	kills.Parent = ls
+	ls.Parent = player
+	pr.kills = ProgressStore.Recall(player.UserId)
+	kills.Value = pr.kills
+	R.Profile:FireClient(player, profilePayload(player))
+	R.ShowMenu:FireClient(player, "")
+end
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+for _, p in ipairs(Players:GetPlayers()) do
+	task.spawn(onPlayerAdded, p)
+end
+
+Players.PlayerRemoving:Connect(function(player)
+	stopLaser(player)
+	saveProfile(player)
+	local pr = profiles[player]
+	if pr and pr.char then
+		pr.char:Destroy()
+	end
+	profiles[player] = nil
+	lastRedeem[player] = nil
+end)
+
+----------------------------------------------------------------------
+-- Go!
+----------------------------------------------------------------------
+task.spawn(function()
+	buildTemplates()
+	for _ = 1, Config.MaxNpcs do
+		spawnNpc()
+	end
+end)
+]]></ProtectedString></Properties></Item>
+</Item>
+<Item class="ServerStorage" referent="RBX00000025"><Properties><string name="Name">ServerStorage</string></Properties></Item>
+<Item class="StarterGui" referent="RBX00000026"><Properties><string name="Name">StarterGui</string></Properties></Item>
+<Item class="StarterPlayer" referent="RBX00000024"><Properties><string name="Name">StarterPlayer</string></Properties><Item class="StarterPlayerScripts" referent="RBX00000022"><Properties><string name="Name">StarterPlayerScripts</string></Properties><Item class="LocalScript" referent="RBX00000020"><Properties><string name="Name">MenuClient</string><ProtectedString name="Source"><![CDATA[-- MenuClient (LocalScript, StarterPlayerScripts)
+-- Main menu, character select, HUD, input, camera and UI sounds.
+
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local Config = require(RS:WaitForChild("GameConfig"))
+local SND = Config.Sounds
+local Remotes = RS:WaitForChild("Remotes")
+
+local SelectCharacter = Remotes:WaitForChild("SelectCharacter")
+local RequestMenu = Remotes:WaitForChild("RequestMenu")
+local MenuCountdown = Remotes:WaitForChild("MenuCountdown")
+local ShowMenu = Remotes:WaitForChild("ShowMenu")
+local Spawned = Remotes:WaitForChild("Spawned")
+local UseTool = Remotes:WaitForChild("UseTool")
+local UseAbility = Remotes:WaitForChild("UseAbility")
+local AbilityCooldown = Remotes:WaitForChild("AbilityCooldown")
+local Notify = Remotes:WaitForChild("Notify")
+local Shake = Remotes:WaitForChild("Shake")
+local Launch = Remotes:WaitForChild("Launch")
+local ProfileEvent = Remotes:WaitForChild("Profile")
+local GetProfile = Remotes:WaitForChild("GetProfile")
+local GetCode = Remotes:WaitForChild("GetCode")
+local RedeemCode = Remotes:WaitForChild("RedeemCode")
+local Previews = RS:WaitForChild("Previews")
+
+local A = CFrame.Angles
+local WHITE = Color3.new(1, 1, 1)
+local PANEL = Color3.fromRGB(26, 29, 40)
+local PANEL2 = Color3.fromRGB(38, 42, 58)
+local GREEN = Color3.fromRGB(60, 190, 110)
+local RED = Color3.fromRGB(215, 70, 70)
+local GOLD = Color3.fromRGB(255, 200, 70)
+local MUTED = Color3.fromRGB(160, 168, 190)
+
+local state = "menu" -- "menu" | "select" | "game"
+local profile = { kills = 0, unlocked = {} }
+local currentDef = nil
+local selectedId = nil
+
+----------------------------------------------------------------------
+-- Sounds
+----------------------------------------------------------------------
+local function sfx(id, vol, pitch)
+	if not id or id == "" then
+		return
+	end
+	local s = Instance.new("Sound")
+	s.SoundId = id
+	s.Volume = vol or 0.6
+	s.PlaybackSpeed = pitch or 1
+	s.Parent = SoundService
+	s:Play()
+	Debris:AddItem(s, 4)
+end
+
+local music = nil
+if SND.MenuMusic and SND.MenuMusic ~= "" then
+	music = Instance.new("Sound")
+	music.SoundId = SND.MenuMusic
+	music.Looped = true
+	music.Volume = 0.35
+	music.Parent = SoundService
+end
+
+----------------------------------------------------------------------
+-- UI helpers
+----------------------------------------------------------------------
+local function make(class, props, parent)
+	local o = Instance.new(class)
+	for k, v in pairs(props) do
+		o[k] = v
+	end
+	o.Parent = parent
+	return o
+end
+
+local function corner(parent, r)
+	make("UICorner", { CornerRadius = UDim.new(0, r or 8) }, parent)
+end
+
+local function text(parent, str, size, pos, textSize, color, align, font)
+	return make("TextLabel", {
+		BackgroundTransparency = 1,
+		Text = str,
+		Size = size,
+		Position = pos,
+		TextSize = textSize or 14,
+		TextColor3 = color or WHITE,
+		Font = font or Enum.Font.GothamMedium,
+		TextXAlignment = align or Enum.TextXAlignment.Left,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		TextWrapped = true,
+	}, parent)
+end
+
+local function button(parent, str, size, pos, color, onClick, textSize)
+	local b = make("TextButton", {
+		Text = str,
+		Size = size,
+		Position = pos,
+		BackgroundColor3 = color,
+		TextColor3 = WHITE,
+		Font = Enum.Font.GothamBold,
+		TextSize = textSize or 16,
+		AutoButtonColor = true,
+	}, parent)
+	corner(b, 8)
+	b.MouseButton1Click:Connect(function()
+		sfx(SND.Click, 0.5)
+		onClick()
+	end)
+	return b
+end
+
+local gui = make("ScreenGui", {
+	Name = "SkibidiUI",
+	ResetOnSpawn = false,
+	IgnoreGuiInset = true,
+	ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+	DisplayOrder = 10,
+}, player:WaitForChild("PlayerGui"))
+
+-- every panel is designed at a fixed size and shrunk to fit small phone screens
+local scales = {}
+local function addScale(parent, w, h, fit, maxScale)
+	local s = make("UIScale", {}, parent)
+	table.insert(scales, { obj = s, w = w, h = h, fit = fit or 0.92, max = maxScale or 1.1 })
+end
+local function applyScale()
+	local v = camera.ViewportSize
+	for _, s in ipairs(scales) do
+		s.obj.Scale = math.clamp(math.min(v.X / s.w, v.Y / s.h) * s.fit, 0.45, s.max)
+	end
+end
+camera:GetPropertyChangedSignal("ViewportSize"):Connect(applyScale)
+
+local function panel(w, h, color)
+	local f = make("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.fromOffset(w, h),
+		BackgroundColor3 = color or PANEL,
+		BorderSizePixel = 0,
+		Visible = false,
+	}, gui)
+	corner(f, 12)
+	make("UIStroke", { Color = Color3.fromRGB(70, 78, 110), Thickness = 1.5 }, f)
+	addScale(f, w, h)
+	return f
+end
+
+----------------------------------------------------------------------
+-- Toast + countdown banner
+----------------------------------------------------------------------
+local toast = make("TextLabel", {
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 64),
+	Size = UDim2.fromOffset(260, 28),
+	BackgroundColor3 = Color3.fromRGB(15, 17, 24),
+	BackgroundTransparency = 0.2,
+	TextColor3 = WHITE,
+	Font = Enum.Font.GothamBold,
+	TextSize = 15,
+	Text = "",
+	Visible = false,
+	ZIndex = 20,
+}, gui)
+corner(toast, 8)
+addScale(toast, 700, 380, 0.9, 1)
+local toastId = 0
+local function showToast(msg)
+	toastId = toastId + 1
+	local id = toastId
+	toast.Text = msg
+	toast.Visible = true
+	task.delay(2.2, function()
+		if toastId == id then
+			toast.Visible = false
+		end
+	end)
+end
+
+local banner = make("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.new(0.5, 0, 0.32, 0),
+	Size = UDim2.fromOffset(300, 74),
+	BackgroundColor3 = PANEL,
+	BackgroundTransparency = 0.05,
+	Visible = false,
+	ZIndex = 30,
+}, gui)
+corner(banner, 12)
+make("UIStroke", { Color = GOLD, Thickness = 2 }, banner)
+addScale(banner, 700, 380, 0.9, 1)
+local bannerText = make("TextLabel", {
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, 0, 0, 44),
+	Position = UDim2.new(0, 0, 0, 4),
+	Text = "Returning to menu in 5",
+	TextColor3 = WHITE,
+	Font = Enum.Font.GothamBold,
+	TextSize = 22,
+	ZIndex = 31,
+}, banner)
+local cancelBtn = button(banner, "Cancel", UDim2.fromOffset(90, 22), UDim2.new(0.5, -45, 1, -28), RED, function()
+	RequestMenu:FireServer()
+end, 13)
+cancelBtn.ZIndex = 31
+
+----------------------------------------------------------------------
+-- Viewport previews
+----------------------------------------------------------------------
+local function fillViewport(vp, charId)
+	vp:ClearAllChildren()
+	local src = Previews:FindFirstChild(charId)
+	if not src then
+		return nil
+	end
+	local model = src:Clone()
+	model.Parent = vp
+	local cf, size = model:GetBoundingBox()
+	local cam = Instance.new("Camera")
+	cam.FieldOfView = 40
+	cam.Parent = vp
+	vp.CurrentCamera = cam
+	local dist = math.max(size.Y, size.X * 0.9) / (2 * math.tan(math.rad(20))) * 1.12 + size.Z / 2
+	cam.CFrame = CFrame.lookAt(cf.Position + Vector3.new(0, size.Y * 0.04, -dist), cf.Position)
+	vp.Ambient = Color3.fromRGB(170, 170, 180)
+	vp.LightColor = Color3.fromRGB(255, 255, 255)
+	vp.LightDirection = Vector3.new(-0.6, -1, 0.7)
+	local root = model:FindFirstChild("HumanoidRootPart")
+	return model, root and root.Position or cf.Position
+end
+
+----------------------------------------------------------------------
+-- Main menu
+----------------------------------------------------------------------
+local mainPanel = panel(300, 340)
+text(mainPanel, "SKIBIDI", UDim2.new(1, 0, 0, 44), UDim2.new(0, 0, 0, 16), 40, WHITE, Enum.TextXAlignment.Center, Enum.Font.GothamBlack)
+text(mainPanel, "WARFARE", UDim2.new(1, 0, 0, 28), UDim2.new(0, 0, 0, 58), 24, GOLD, Enum.TextXAlignment.Center, Enum.Font.GothamBlack)
+text(mainPanel, "Pick a character, fight, unlock more.", UDim2.new(1, -20, 0, 18), UDim2.new(0, 10, 0, 94), 13, MUTED, Enum.TextXAlignment.Center)
+local killsLabel = text(mainPanel, "Kills: 0", UDim2.new(1, -20, 0, 18), UDim2.new(0, 10, 0, 114), 14, WHITE, Enum.TextXAlignment.Center, Enum.Font.GothamBold)
+
+-- Save code (no DataStore): copy your code, type it in next time to get your kills back
+text(mainPanel, "Save code - keeps your kills", UDim2.new(1, -20, 0, 16), UDim2.new(0, 10, 0, 210), 12, MUTED, Enum.TextXAlignment.Center)
+local codeBox = make("TextBox", {
+	Position = UDim2.new(0, 10, 0, 230),
+	Size = UDim2.fromOffset(190, 32),
+	BackgroundColor3 = PANEL2,
+	TextColor3 = WHITE,
+	PlaceholderText = "XXXXX-XXXXX",
+	PlaceholderColor3 = MUTED,
+	Text = "",
+	ClearTextOnFocus = false,
+	Font = Enum.Font.GothamBold,
+	TextSize = 16,
+}, mainPanel)
+corner(codeBox, 8)
+local BLUE = Color3.fromRGB(70, 110, 200)
+button(mainPanel, "LOAD", UDim2.fromOffset(80, 32), UDim2.new(0, 210, 0, 230), BLUE, function()
+	local ok, success, msg = pcall(function()
+		return RedeemCode:InvokeServer(codeBox.Text)
+	end)
+	if ok then
+		showToast(msg or (success and "Loaded!" or "Invalid code"))
+	else
+		showToast("Could not load the code")
+	end
+end, 14)
+button(mainPanel, "SHOW MY SAVE CODE", UDim2.fromOffset(280, 28), UDim2.new(0, 10, 0, 270), BLUE, function()
+	local ok, code = pcall(function()
+		return GetCode:InvokeServer()
+	end)
+	if ok and code then
+		codeBox.Text = code
+		showToast("Copy this code and keep it!")
+	else
+		showToast("Could not make a code")
+	end
+end, 13)
+
+----------------------------------------------------------------------
+-- Character select
+----------------------------------------------------------------------
+local selectPanel = panel(640, 330)
+text(selectPanel, "Choose your character", UDim2.new(0, 300, 0, 26), UDim2.new(0, 12, 0, 10), 19, WHITE, nil, Enum.Font.GothamBold)
+
+local listFrame = make("ScrollingFrame", {
+	Position = UDim2.new(0, 10, 0, 44),
+	Size = UDim2.fromOffset(200, 276),
+	BackgroundColor3 = PANEL2,
+	BorderSizePixel = 0,
+	ScrollBarThickness = 4,
+	CanvasSize = UDim2.new(0, 0, 0, 0),
+	AutomaticCanvasSize = Enum.AutomaticSize.Y,
+}, selectPanel)
+corner(listFrame, 8)
+make("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }, listFrame)
+make("UIPadding", { PaddingTop = UDim.new(0, 6), PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6) }, listFrame)
+
+local detail = make("Frame", { Position = UDim2.new(0, 222, 0, 44), Size = UDim2.fromOffset(408, 276), BackgroundTransparency = 1 }, selectPanel)
+local bigView = make("ViewportFrame", {
+	Size = UDim2.fromOffset(170, 170),
+	BackgroundColor3 = Color3.fromRGB(18, 20, 28),
+	BorderSizePixel = 0,
+}, detail)
+corner(bigView, 10)
+local nameLabel = text(detail, "", UDim2.fromOffset(228, 26), UDim2.fromOffset(180, 0), 21, WHITE, nil, Enum.Font.GothamBold)
+local descLabel = text(detail, "", UDim2.fromOffset(228, 42), UDim2.fromOffset(180, 28), 13, MUTED)
+local statsLabel = text(detail, "", UDim2.fromOffset(228, 34), UDim2.fromOffset(180, 74), 13, GOLD, nil, Enum.Font.GothamBold)
+local lockLabel = text(detail, "", UDim2.fromOffset(228, 34), UDim2.fromOffset(180, 112), 13, RED, nil, Enum.Font.GothamBold)
+local toolLabel = text(detail, "", UDim2.fromOffset(408, 32), UDim2.fromOffset(0, 176), 13, WHITE)
+local abilityLabel = text(detail, "", UDim2.fromOffset(408, 32), UDim2.fromOffset(0, 208), 13, WHITE)
+local playBtn
+local backBtn
+
+local cards = {}
+local bigModel, bigCenter = nil, nil
+local spinAngle = 0
+local spawningLock = false
+
+local function isUnlocked(def)
+	return Config.UnlockAll or def.Starter or profile.unlocked[def.Id] == true
+end
+
+local function refreshDetail()
+	local def = Config.ById[selectedId]
+	if not def then
+		return
+	end
+	nameLabel.Text = def.Name
+	local note = RS:GetAttribute("Fallback_" .. def.Id) and "  (backup model - the asset could not load)" or ""
+	descLabel.Text = def.Desc .. note
+	statsLabel.Text = string.format("HP %d    Speed %d    Size %d", def.Health, def.Speed, def.Height)
+	toolLabel.Text = "ATTACK  -  " .. def.Tool.Name .. ": " .. def.Tool.Desc
+	abilityLabel.Text = "ABILITY (Q)  -  " .. def.Ability.Name .. ": " .. def.Ability.Desc
+	local unlocked = isUnlocked(def)
+	if unlocked then
+		lockLabel.Text = def.Starter and "Starter character" or "Unlocked"
+		lockLabel.TextColor3 = GREEN
+		playBtn.Text = "PLAY AS " .. string.upper(def.Name)
+		playBtn.BackgroundColor3 = GREEN
+	else
+		lockLabel.Text = "LOCKED - get " .. def.UnlockKills .. " kills (you have " .. profile.kills .. ")"
+		lockLabel.TextColor3 = RED
+		playBtn.Text = "LOCKED"
+		playBtn.BackgroundColor3 = Color3.fromRGB(90, 90, 100)
+	end
+	for id, c in pairs(cards) do
+		c.stroke.Enabled = (id == selectedId)
+	end
+end
+
+local function loadBigPreview()
+	if not selectedId then
+		return
+	end
+	bigModel, bigCenter = fillViewport(bigView, selectedId)
+end
+
+local function selectChar(id)
+	selectedId = id
+	refreshDetail()
+	loadBigPreview()
+end
+
+local function buildCards()
+	for _, c in pairs(cards) do
+		c.frame:Destroy()
+	end
+	cards = {}
+	for i, def in ipairs(Config.Characters) do
+		local f = make("TextButton", {
+			Text = "",
+			Size = UDim2.new(1, 0, 0, 62),
+			BackgroundColor3 = PANEL,
+			LayoutOrder = i,
+			AutoButtonColor = true,
+		}, listFrame)
+		corner(f, 8)
+		local stroke = make("UIStroke", { Color = GOLD, Thickness = 2, Enabled = false }, f)
+		local vp = make("ViewportFrame", {
+			Position = UDim2.fromOffset(5, 5),
+			Size = UDim2.fromOffset(52, 52),
+			BackgroundColor3 = Color3.fromRGB(18, 20, 28),
+			BorderSizePixel = 0,
+		}, f)
+		corner(vp, 6)
+		fillViewport(vp, def.Id)
+		text(f, def.Name, UDim2.new(1, -66, 0, 20), UDim2.fromOffset(64, 8), 14, WHITE, nil, Enum.Font.GothamBold)
+		local status = text(f, "", UDim2.new(1, -66, 0, 18), UDim2.fromOffset(64, 32), 12, MUTED)
+		cards[def.Id] = { frame = f, stroke = stroke, status = status }
+		f.MouseButton1Click:Connect(function()
+			sfx(SND.Select, 0.5)
+			selectChar(def.Id)
+		end)
+		f.MouseEnter:Connect(function()
+			sfx(SND.Hover, 0.15)
+		end)
+	end
+end
+
+local function refreshCards()
+	for _, def in ipairs(Config.Characters) do
+		local c = cards[def.Id]
+		if c then
+			if isUnlocked(def) then
+				c.status.Text = def.Starter and "Starter" or "Unlocked"
+				c.status.TextColor3 = GREEN
+			else
+				c.status.Text = "LOCKED - " .. def.UnlockKills .. " kills"
+				c.status.TextColor3 = RED
+			end
+		end
+	end
+	killsLabel.Text = "Kills: " .. profile.kills
+	refreshDetail()
+end
+
+local function ensureSelectReady()
+	if not RS:GetAttribute("TemplatesReady") then
+		nameLabel.Text = "Loading characters..."
+		descLabel.Text = ""
+		RS:GetAttributeChangedSignal("TemplatesReady"):Wait()
+	end
+	if next(cards) == nil then
+		buildCards()
+	end
+	if not selectedId then
+		selectedId = Config.Characters[1].Id
+	end
+	refreshCards()
+	loadBigPreview()
+end
+
+playBtn = button(detail, "PLAY", UDim2.fromOffset(408, 34), UDim2.fromOffset(0, 242), GREEN, function()
+	local def = Config.ById[selectedId]
+	if not def or spawningLock then
+		return
+	end
+	if not isUnlocked(def) then
+		showToast(def.Name .. " needs " .. def.UnlockKills .. " kills")
+		return
+	end
+	spawningLock = true
+	playBtn.Text = "SPAWNING..."
+	SelectCharacter:FireServer(def.Id)
+	task.delay(2, function()
+		spawningLock = false
+		refreshDetail()
+	end)
+end, 16)
+
+backBtn = button(selectPanel, "< Back", UDim2.fromOffset(78, 26), UDim2.new(1, -90, 0, 9), RED, function()
+	-- set below
+end, 14)
+
+----------------------------------------------------------------------
+-- HUD (menu button, kills, health, ability button)
+----------------------------------------------------------------------
+local isTouch = UIS.TouchEnabled and not UIS.MouseEnabled
+
+local top = make("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0),
+	Position = UDim2.new(0.5, 0, 0, 6),
+	Size = UDim2.fromOffset(200, 46),
+	BackgroundTransparency = 1,
+	Visible = false,
+}, gui)
+addScale(top, 700, 380, 0.9, 1)
+
+local menuBtn = button(top, "MENU", UDim2.fromOffset(62, 24), UDim2.fromOffset(0, 0), PANEL2, function()
+	RequestMenu:FireServer()
+end, 13)
+local hudKills = text(top, "Kills: 0", UDim2.fromOffset(130, 24), UDim2.fromOffset(70, 3), 14, WHITE, nil, Enum.Font.GothamBold)
+hudKills.TextStrokeTransparency = 0.5
+local hpBack = make("Frame", {
+	Position = UDim2.fromOffset(0, 30),
+	Size = UDim2.fromOffset(200, 14),
+	BackgroundColor3 = Color3.fromRGB(20, 22, 30),
+	BorderSizePixel = 0,
+}, top)
+corner(hpBack, 7)
+local hpFill = make("Frame", { Size = UDim2.new(1, 0, 1, 0), BackgroundColor3 = GREEN, BorderSizePixel = 0 }, hpBack)
+corner(hpFill, 7)
+local hpText = make("TextLabel", {
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, 0, 1, 0),
+	Text = "",
+	TextColor3 = WHITE,
+	Font = Enum.Font.GothamBold,
+	TextSize = 10,
+	ZIndex = 3,
+}, hpBack)
+
+local abilityHolder = make("Frame", {
+	AnchorPoint = Vector2.new(1, 1),
+	Position = isTouch and UDim2.new(1, -96, 1, -150) or UDim2.new(1, -16, 1, -16),
+	Size = UDim2.fromOffset(64, 64),
+	BackgroundTransparency = 1,
+	Visible = false,
+}, gui)
+addScale(abilityHolder, 700, 380, 0.9, 1)
+local abilityBtn = make("TextButton", {
+	Size = UDim2.fromOffset(64, 64),
+	BackgroundColor3 = PANEL,
+	Text = "",
+	AutoButtonColor = true,
+}, abilityHolder)
+corner(abilityBtn, 12)
+make("UIStroke", { Color = GOLD, Thickness = 2 }, abilityBtn)
+local abilityName = make("TextLabel", {
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, -6, 0, 40),
+	Position = UDim2.fromOffset(3, 4),
+	Text = "",
+	TextColor3 = WHITE,
+	Font = Enum.Font.GothamBold,
+	TextSize = 11,
+	TextWrapped = true,
+	ZIndex = 2,
+}, abilityBtn)
+local abilityKey = make("TextLabel", {
+	BackgroundTransparency = 1,
+	Size = UDim2.new(1, 0, 0, 16),
+	Position = UDim2.new(0, 0, 1, -18),
+	Text = isTouch and "TAP" or "Q",
+	TextColor3 = GOLD,
+	Font = Enum.Font.GothamBlack,
+	TextSize = 13,
+	ZIndex = 2,
+}, abilityBtn)
+local cooldownOverlay = make("Frame", {
+	AnchorPoint = Vector2.new(0, 1),
+	Position = UDim2.new(0, 0, 1, 0),
+	Size = UDim2.new(1, 0, 0, 0),
+	BackgroundColor3 = Color3.new(0, 0, 0),
+	BackgroundTransparency = 0.45,
+	BorderSizePixel = 0,
+	ZIndex = 3,
+}, abilityBtn)
+corner(cooldownOverlay, 12)
+
+----------------------------------------------------------------------
+-- State handling
+----------------------------------------------------------------------
+local hpConn = nil
+local shakeUntil, shakeAmp = 0, 0
+local orbit = 0
+
+local function getHumanoid()
+	local c = player.Character
+	return c and c:FindFirstChildOfClass("Humanoid"), c
+end
+
+local function setCoreGui(inGame)
+	pcall(function()
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Health, false)
+		StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Backpack, inGame)
+	end)
+end
+
+local function hideBanner()
+	banner.Visible = false
+end
+
+local function setState(newState)
+	state = newState
+	mainPanel.Visible = (state == "menu")
+	selectPanel.Visible = (state == "select")
+	top.Visible = (state == "game")
+	abilityHolder.Visible = (state == "game")
+	setCoreGui(state == "game")
+	if state ~= "game" then
+		hideBanner()
+		if music then
+			music:Play()
+		end
+		player.CameraMinZoomDistance = 0.5
+		player.CameraMaxZoomDistance = 128
+		if hpConn then
+			hpConn:Disconnect()
+			hpConn = nil
+		end
+	else
+		if music then
+			music:Stop()
+		end
+	end
+	if state == "select" then
+		task.spawn(ensureSelectReady)
+	end
+end
+
+button(mainPanel, "PLAY", UDim2.fromOffset(220, 48), UDim2.new(0.5, -110, 0, 150), GREEN, function()
+	setState("select")
+end, 22)
+text(mainPanel, "Tip: the MENU button brings you back here.", UDim2.new(1, -20, 0, 30), UDim2.new(0, 10, 1, -40), 12, MUTED, Enum.TextXAlignment.Center)
+backBtn.MouseButton1Click:Connect(function()
+	setState("menu")
+end)
+
+-- abilities ------------------------------------------------------
+local cooldownEnd = 0
+local function aimPoint()
+	local loc
+	if isTouch then
+		loc = camera.ViewportSize / 2
+	else
+		loc = UIS:GetMouseLocation()
+	end
+	local ray = camera:ViewportPointToRay(loc.X, loc.Y)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { player.Character or workspace:FindFirstChild("Effects") or workspace }
+	local r = workspace:Raycast(ray.Origin, ray.Direction * 1500, params)
+	if r then
+		return r.Position
+	end
+	return ray.Origin + ray.Direction * 600
+end
+
+local function useAbility()
+	if state ~= "game" or os.clock() < cooldownEnd then
+		return
+	end
+	UseAbility:FireServer(aimPoint())
+end
+abilityBtn.MouseButton1Click:Connect(useAbility)
+
+AbilityCooldown.OnClientEvent:Connect(function(seconds)
+	cooldownEnd = os.clock() + seconds
+	cooldownOverlay.Size = UDim2.new(1, 0, 1, 0)
+	TweenService:Create(cooldownOverlay, TweenInfo.new(seconds, Enum.EasingStyle.Linear), { Size = UDim2.new(1, 0, 0, 0) }):Play()
+end)
+
+UIS.InputBegan:Connect(function(input, processed)
+	if processed then
+		return
+	end
+	if input.KeyCode == Enum.KeyCode.Q then
+		useAbility()
+	end
+end)
+
+-- tools ----------------------------------------------------------
+local hooked = {}
+local holdId = 0
+local function hookTool(tool)
+	if hooked[tool] then
+		return
+	end
+	hooked[tool] = true
+	tool.Activated:Connect(function()
+		holdId = holdId + 1
+		local mine = holdId
+		UseTool:FireServer(tool.Name, aimPoint(), true)
+		if tool:GetAttribute("Hold") then
+			task.spawn(function()
+				while holdId == mine and tool.Parent == player.Character do
+					task.wait(0.1)
+					if holdId == mine then
+						UseTool:FireServer(tool.Name, aimPoint(), true)
+					end
+				end
+			end)
+		end
+	end)
+	local function stop()
+		holdId = holdId + 1
+		UseTool:FireServer(tool.Name, nil, false)
+	end
+	tool.Deactivated:Connect(stop)
+	tool.Unequipped:Connect(stop)
+end
+
+local function hookCharacter(char)
+	for _, c in ipairs(char:GetChildren()) do
+		if c:IsA("Tool") then
+			hookTool(c)
+		end
+	end
+	char.ChildAdded:Connect(function(c)
+		if c:IsA("Tool") then
+			hookTool(c)
+		end
+	end)
+end
+
+-- remote events --------------------------------------------------
+MenuCountdown.OnClientEvent:Connect(function(n)
+	if n and n > 0 then
+		banner.Visible = true
+		bannerText.Text = "Returning to menu in " .. n
+		sfx(SND.Tick, 0.6, 1 + (5 - n) * 0.05)
+	else
+		hideBanner()
+	end
+end)
+
+
+ShowMenu.OnClientEvent:Connect(function(reason)
+	setState("menu")
+	if reason and reason ~= "" then
+		showToast(reason)
+	end
+end)
+
+Notify.OnClientEvent:Connect(function(msg)
+	showToast(msg)
+	sfx(SND.Select, 0.5)
+end)
+
+Shake.OnClientEvent:Connect(function(amp, secs)
+	shakeAmp = amp
+	shakeUntil = os.clock() + secs
+end)
+
+Launch.OnClientEvent:Connect(function(vel)
+	local hum, char = getHumanoid()
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	if hum and hrp then
+		hum:ChangeState(Enum.HumanoidStateType.Freefall)
+		hrp:ApplyImpulse(vel * hrp.AssemblyMass)
+	end
+end)
+
+local function applyProfile(p)
+	if type(p) ~= "table" then
+		return
+	end
+	profile = p
+	hudKills.Text = "Kills: " .. (p.kills or 0)
+	if next(cards) ~= nil then
+		refreshCards()
+	else
+		killsLabel.Text = "Kills: " .. (p.kills or 0)
+	end
+end
+ProfileEvent.OnClientEvent:Connect(applyProfile)
+
+Spawned.OnClientEvent:Connect(function(charId, height)
+	currentDef = Config.ById[charId]
+	spawningLock = false
+	abilityName.Text = currentDef and currentDef.Ability.Name or ""
+	cooldownOverlay.Size = UDim2.new(1, 0, 0, 0)
+	cooldownEnd = 0
+
+	local hum, char
+	local t = 0
+	repeat
+		hum, char = getHumanoid()
+		if hum and char and char:FindFirstChild("HumanoidRootPart") then
+			break
+		end
+		task.wait(0.1)
+		t = t + 0.1
+	until t > 10
+	if not hum then
+		return
+	end
+
+	setState("game")
+	hookCharacter(char)
+	camera.CameraType = Enum.CameraType.Custom
+	camera.CameraSubject = hum
+	local h = height or 6
+	player.CameraMinZoomDistance = math.clamp(h * 1.0, 0.5, 100)
+	player.CameraMaxZoomDistance = math.clamp(math.max(h * 5, 128), 128, 400)
+
+	if hpConn then
+		hpConn:Disconnect()
+	end
+	local function updateHp()
+		local frac = math.clamp(hum.Health / hum.MaxHealth, 0, 1)
+		hpFill.Size = UDim2.new(frac, 0, 1, 0)
+		hpFill.BackgroundColor3 = frac > 0.5 and GREEN or (frac > 0.25 and GOLD or RED)
+		hpText.Text = math.ceil(hum.Health) .. " / " .. math.ceil(hum.MaxHealth)
+	end
+	hpConn = hum.HealthChanged:Connect(updateHp)
+	updateHp()
+end)
+
+-- per-frame: menu camera orbit + screen shake + preview spin ------
+RunService:BindToRenderStep("SkibidiMenuCamera", Enum.RenderPriority.Camera.Value + 1, function(dt)
+	if state ~= "game" then
+		orbit = orbit + dt * 0.1
+		camera.CameraType = Enum.CameraType.Scriptable
+		camera.CFrame = CFrame.lookAt(Vector3.new(math.cos(orbit) * 240, 120, math.sin(orbit) * 240), Vector3.new(0, 45, 0))
+	end
+	if state == "select" and bigModel and bigModel.Parent and bigCenter then
+		spinAngle = spinAngle + dt * 0.9
+		bigModel:PivotTo(CFrame.new(bigCenter) * A(0, spinAngle, 0))
+	end
+	if state == "game" then
+		local hum = getHumanoid()
+		if hum then
+			if os.clock() < shakeUntil then
+				local k = shakeAmp * math.clamp((shakeUntil - os.clock()) * 3, 0, 1)
+				hum.CameraOffset = Vector3.new((math.random() - 0.5) * k * 2, (math.random() - 0.5) * k * 2, 0)
+			elseif hum.CameraOffset.Magnitude > 0 then
+				hum.CameraOffset = Vector3.new(0, 0, 0)
+			end
+		end
+	end
+end)
+
+-- first launch ------------------------------------------------------
+applyScale()
+setState("menu")
+task.spawn(function()
+	local ok, p = pcall(function()
+		return GetProfile:InvokeServer()
+	end)
+	if ok then
+		applyProfile(p)
+	end
+end)
+]]></ProtectedString></Properties></Item>
+<Item class="LocalScript" referent="RBX00000021"><Properties><string name="Name">CharacterAnimator</string><ProtectedString name="Source"><![CDATA[-- CharacterAnimator (LocalScript, StarterPlayerScripts)
+-- Animates every character in the game on this client.
+--   * If ReplicatedStorage.Animations.<CharacterId> has Animation objects with an AnimationId,
+--     those real animations are played (Idle, Walk, Attack, Ability).
+--   * Otherwise the built-in bone animation from CharacterAnim is used.
+
+local Players = game:GetService("Players")
+local RS = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local CollectionService = game:GetService("CollectionService")
+
+local Anim = require(RS:WaitForChild("CharacterAnim"))
+local animFolder = RS:WaitForChild("Animations")
+
+local tracked = {}
+
+local function customAnimations(charId)
+	local f = animFolder:FindFirstChild(charId)
+	if not f then
+		return nil
+	end
+	local found, any = {}, false
+	for _, a in ipairs(f:GetChildren()) do
+		if a:IsA("Animation") and a.AnimationId ~= "" and a.AnimationId ~= "rbxassetid://0" then
+			found[a.Name] = a
+			any = true
+		end
+	end
+	return any and found or nil
+end
+
+local function setup(model)
+	if tracked[model] then
+		return
+	end
+	local state = {}
+	tracked[model] = state
+
+	local charId = model:GetAttribute("CharId")
+	if not charId then
+		model:GetAttributeChangedSignal("CharId"):Wait()
+		charId = model:GetAttribute("CharId")
+	end
+
+	local custom = customAnimations(charId)
+	if custom then
+		local hum = model:WaitForChild("Humanoid", 5)
+		local animator = hum and (hum:FindFirstChildOfClass("Animator") or hum:WaitForChild("Animator", 5))
+		if animator then
+			state.tracks = {}
+			for name, anim in pairs(custom) do
+				local ok, track = pcall(function()
+					return animator:LoadAnimation(anim)
+				end)
+				if ok and track then
+					state.tracks[name] = track
+				end
+			end
+			if state.tracks.Idle then
+				state.tracks.Idle.Looped = true
+				state.tracks.Idle.Priority = Enum.AnimationPriority.Idle
+			end
+			if state.tracks.Walk then
+				state.tracks.Walk.Looped = true
+				state.tracks.Walk.Priority = Enum.AnimationPriority.Movement
+			end
+			for _, n in ipairs({ "Attack", "Ability" }) do
+				if state.tracks[n] then
+					state.tracks[n].Priority = Enum.AnimationPriority.Action
+				end
+			end
+			state.custom = true
+			model:GetAttributeChangedSignal("AtkTime"):Connect(function()
+				if state.tracks.Attack then
+					state.tracks.Attack:Play(0.05)
+				end
+			end)
+			model:GetAttributeChangedSignal("AbTime"):Connect(function()
+				if state.tracks.Ability then
+					state.tracks.Ability:Play(0.05)
+				end
+			end)
+		end
+	end
+end
+
+CollectionService:GetInstanceAddedSignal("SkibidiChar"):Connect(function(model)
+	task.spawn(setup, model)
+end)
+for _, m in ipairs(CollectionService:GetTagged("SkibidiChar")) do
+	task.spawn(setup, m)
+end
+
+RunService.RenderStepped:Connect(function(dt)
+	for model, state in pairs(tracked) do
+		if not model.Parent then
+			tracked[model] = nil
+		elseif state.custom then
+			local hrp = model:FindFirstChild("HumanoidRootPart")
+			if hrp then
+				local v = hrp.AssemblyLinearVelocity
+				local moving = Vector3.new(v.X, 0, v.Z).Magnitude > 1.5
+				local walk, idle = state.tracks.Walk, state.tracks.Idle
+				if moving then
+					if idle and idle.IsPlaying then
+						idle:Stop(0.15)
+					end
+					if walk and not walk.IsPlaying then
+						walk:Play(0.15)
+					end
+				else
+					if walk and walk.IsPlaying then
+						walk:Stop(0.15)
+					end
+					if idle and not idle.IsPlaying then
+						idle:Play(0.15)
+					end
+				end
+			end
+		elseif model:GetAttribute("CharId") then
+			Anim.Step(model, state, dt)
+		end
+	end
+end)
+]]></ProtectedString></Properties></Item>
+</Item>
+<Item class="StarterCharacterScripts" referent="RBX00000023"><Properties><string name="Name">StarterCharacterScripts</string></Properties></Item>
+</Item>
+</roblox>
